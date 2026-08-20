@@ -6,7 +6,7 @@ metadata:
 spec:
   project: default
   source:
-    repoURL: https://github.com/dariusz-trawicki/argocd-canary-demo.git
+    repoURL: https://github.com/<user>/argocd-canary-demo.git
     targetRevision: main
     path: manifests
   destination:
