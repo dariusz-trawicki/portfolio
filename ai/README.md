@@ -11,7 +11,7 @@ from experiments to models running in the cloud.
 | [llm-agents](llm-agents/) | Function calling, tool use, voice and multi-step agent workflows |
 | [llm-deployment](llm-deployment/) | Serving LLMs — managed APIs, serverless, self-hosted GPU instances |
 | [llm-fine-tuning](fine-tuning/) | Adapting open models to domain-specific tasks |
-| [llm-tooling](llm-tooling/) | Applied LLM utilities and skill-chain workflows |
+| [llm-tooling](llm-tooling/) | Applied LLM utilities and Claude Code skill-chain workflows |
 | [computer-vision](computer-vision/) | Classification, detection, tracking, pose estimation, OCR |
 | [gen-ai](gen-ai/) | Generative image models |
 | [predictive-modeling-optimization](predictive-modeling-optimization/) | Classical ML pipelines and mathematical optimization |
