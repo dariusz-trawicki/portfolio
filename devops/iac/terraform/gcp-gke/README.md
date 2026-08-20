@@ -7,4 +7,4 @@ Dataset: *Intelligent Manufacturing Dataset* (Kaggle) — sensor, network and pr
 telemetry.
 
 - **The code**:
-  - [`machines-efficiency-tf`](https://github.com/dariusz-trawicki/coding-examples/tree/main/portfolio/mlops/gitops-gke-machines-efficiency/repositories/machines-efficiency-tf)
+  - [`machines-efficiency-tf`](https://github.com/dariusz-trawicki/portfolio/tree/main/mlops/gitops-gke-machines-efficiency/repositories/machines-efficiency-tf)
