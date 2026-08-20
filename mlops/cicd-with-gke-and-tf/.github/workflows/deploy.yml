@@ -1,0 +1,61 @@
+name: CI/CD Deployment to GKE
+
+on:
+  push:
+    branches: [ main ]
+
+env:
+  PROJECT_ID: "ml-gke-iris-d509"
+  GKE_CLUSTER: "ml-ops-iris"
+  GKE_LOCATION: "europe-west1-b"
+  DEPLOYMENT_NAME: "mlops-app"
+  IMAGE: "europe-west1-docker.pkg.dev/ml-gke-iris-d509/ml-ops-iris/mlops-app"
+  CONTAINER_NAME: "mlops-app"
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+
+    # OIDC
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Workload Identity Federation (OIDC)
+      - name: Authenticate to Google Cloud (WIF)
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          token_format: "access_token"
+
+      - name: Set up gcloud
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Configure Docker for Artifact Registry
+        run: |
+          gcloud auth configure-docker europe-west1-docker.pkg.dev --quiet
+
+      - name: Build and Push Image
+        run: |
+          docker build -t $IMAGE:$GITHUB_SHA .
+          docker push $IMAGE:$GITHUB_SHA
+
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ env.GKE_CLUSTER }}
+          location: ${{ env.GKE_LOCATION }}
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Deploy to Kubernetes
+        run: |
+          kubectl apply -f kubernetes-deployment.yaml
+          kubectl set image deployment/${DEPLOYMENT_NAME} ${CONTAINER_NAME}=${IMAGE}:${GITHUB_SHA}

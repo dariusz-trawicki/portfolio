@@ -1,0 +1,19 @@
+Streamlit is a Python library that lets you build interactive web applications
+without writing any HTML, CSS, or JavaScript. You write a plain Python script
+and Streamlit automatically renders it as a web app in the browser. It is
+designed for data scientists and AI engineers who want to quickly turn scripts
+or models into shareable tools.
+The core concept is simple: every time a user interacts with a widget,
+Streamlit reruns the entire script from top to bottom. This makes the mental
+model very straightforward. You just describe what the app should look like at
+any given moment, and Streamlit handles the rest.
+It comes with a rich set of built-in components -- text inputs, sliders,
+dropdowns, file uploaders, chat interfaces, charts, and layout tools like
+sidebars, columns, and tabs. For persisting data between reruns, you use
+st.session_state, which acts as a simple key-value store tied to the user
+session.
+You run the app with a single command: streamlit run app.py, and it opens
+automatically at localhost:8501. Streamlit is especially popular for building
+AI demos, internal tools, and data dashboards -- fast prototyping with minimal
+boilerplate. It is not suited for large-scale production apps, but for quick,
+functional interfaces it is hard to beat.

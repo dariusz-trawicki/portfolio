@@ -1,0 +1,16 @@
+plugin: amazon.aws.aws_ec2
+regions: [eu-central-1]
+filters:
+  tag:Env: dev
+
+keyed_groups:
+  - key: tags.Role
+    prefix: role_
+
+hostnames:
+  - tag:Name
+  - dns-name
+
+compose:
+  ansible_host: instance_id
+  aws_ssm_instance_id: instance_id

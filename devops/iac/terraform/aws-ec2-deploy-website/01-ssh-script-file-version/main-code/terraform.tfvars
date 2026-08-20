@@ -1,0 +1,9 @@
+region            = "eu-central-1"
+zone1             = "eu-central-1a"
+aws_key_pair_name = "web-server-key"
+private_key_path  = "./test-key"
+instance_name     = "web-server"
+sg_name           = "website-proj-sg"
+project_name      = "WebsiteProject"
+ssh_user          = "ubuntu"
+ami_id            = "ami-0a116fa7c861dd5f9" # Ubuntu 22.04 LTS in eu-central-1

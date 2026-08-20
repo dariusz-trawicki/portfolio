@@ -1,0 +1,7 @@
+flask
+scikit-learn
+pytest
+numpy
+pylint
+flake8
+black

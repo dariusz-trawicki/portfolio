@@ -1,0 +1,11 @@
+project_id              = "your-project-id"
+region                  = "europe-central2"
+zone                    = "europe-central2-a"
+zone2                   = "europe-central2-b"
+github_repository       = "owner/machines-efficiency-code"
+
+# Optional: lock the control-plane endpoint to your own address.
+# Safe now that CI has no cluster access.
+# master_authorized_cidrs = [
+#   { cidr_block = "203.0.113.7/32", display_name = "home" },
+# ]

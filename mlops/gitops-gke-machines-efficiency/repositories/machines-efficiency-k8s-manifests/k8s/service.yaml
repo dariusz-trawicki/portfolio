@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: machines-efficiency
+  namespace: mlops
+spec:
+  type: LoadBalancer
+  selector:
+    app: machines-efficiency
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

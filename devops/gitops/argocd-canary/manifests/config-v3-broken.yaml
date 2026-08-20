@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: web-config-v3
+data:
+  default.conf: |
+    server {
+      listen 80;
+      location /healthz { return 200 'ok\n'; }
+      location / { return 500 'boom\n'; }
+    }

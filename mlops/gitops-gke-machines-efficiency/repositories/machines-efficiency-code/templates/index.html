@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pl">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+        <title>Smart Manufacturing Machines Efficiency Prediction</title>
+    </head>
+    <body>
+        <h1>Smart Manufacturing Machines Efficiency Prediction</h1>
+
+        <form method="post">
+            {% for name, options in categorical.items() %}
+                {% set current = submitted.get(name) or defaults.get(name) %}
+                <label>
+                    {{ name }}
+                    <select name="{{ name }}" required>
+                        {% for opt in options %}
+                            <option value="{{ opt }}" {% if current == opt %}selected{% endif %}>
+                                {{ opt }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                </label>
+            {% endfor %}
+
+            {% for name in numeric %}
+                <label>
+                    {{ name }}
+                    <input type="number" step="any" name="{{ name }}"
+                           value="{{ submitted.get(name) or defaults.get(name, '') }}" required>
+                </label>
+            {% endfor %}
+
+            <button type="submit">PREDICT</button>
+        </form>
+
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% endif %}
+
+        {% if prediction %}
+            <p class="result">Efficiency Status: <strong>{{ prediction }}</strong></p>
+        {% endif %}
+    </body>
+</html>

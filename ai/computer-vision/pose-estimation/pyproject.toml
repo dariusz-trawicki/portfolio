@@ -1,0 +1,9 @@
+[project]
+name = "pose-estimation"
+version = "0.1.0"
+description = "Real-time pose estimation using MediaPipe BlazePose"
+requires-python = ">=3.10"
+dependencies = [
+    "mediapipe==0.10.21",
+    "opencv-python>=4.9.0",
+]

@@ -1,0 +1,5 @@
+lambda_function_name = "get_s3_buckets_function"
+source_function_file_name = "main.py"
+source_function_name = "get_s3_buckets"
+role_name            = "get-s3-buckets-lambda-role"
+policy_name          = "s3_full_access_policy"

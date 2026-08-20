@@ -1,0 +1,10 @@
+[project]
+name = "Rag-with-bielik"
+version = "0.1.0"
+description = ""
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "openai>=2.16.0",
+    "weaviate-client>=4.19.2",
+]

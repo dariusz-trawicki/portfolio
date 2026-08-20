@@ -1,0 +1,5 @@
+pydantic-ai
+pydantic-ai-slim[openai]
+python-dotenv
+nest_asyncio
+openai

@@ -1,0 +1,127 @@
+main:
+  params: [input]
+  steps:
+    - init:
+        assign:
+          - operation: ${input.operation}
+          - project_id: ${input.project_id}
+          - sql_instance_name: ${input.sql_instance_name}
+
+    - switch_operation:
+        switch:
+          - condition: ${operation == "create_sql_dbs"}
+            assign:
+              - dbs: ${input.dbs}
+            next: call_create_sql_dbs
+          - condition: ${operation == "create_sql_users"}
+            assign:
+              - users: ${input.users}
+            next: call_create_sql_users
+          - condition: ${operation == "delete_sql_dbs"}
+            assign:
+              - dbs: ${input.dbs}
+            next: call_delete_sql_dbs
+          - condition: ${operation == "delete_sql_users"}
+            assign:
+              - users: ${input.users}
+            next: call_delete_sql_users
+
+    - call_create_sql_dbs:
+        call: subworkflow_create_sql_dbs
+        args:
+          dbs: ${dbs}
+          project_id: ${project_id}
+          sql_instance_name: ${sql_instance_name}
+        next: exit
+
+    - call_create_sql_users:
+        call: subworkflow_create_sql_users
+        args:
+          users: ${users}
+          project_id: ${project_id}
+          sql_instance_name: ${sql_instance_name}
+        next: exit
+
+    - call_delete_sql_dbs:
+        call: subworkflow_delete_sql_dbs
+        args:
+          dbs: ${dbs}
+          project_id: ${project_id}
+          sql_instance_name: ${sql_instance_name}
+        next: exit
+
+    - call_delete_sql_users:
+        call: subworkflow_delete_sql_users
+        args:
+          users: ${users}
+          project_id: ${project_id}
+          sql_instance_name: ${sql_instance_name}
+        next: exit
+
+    - exit:
+        return: "END"
+
+subworkflow_create_sql_dbs:
+  params: [dbs, project_id, sql_instance_name]
+  steps:
+    - create_dbs_loop:
+        for:
+          value: db
+          in: ${dbs}
+          steps:
+            - create_db:
+                call: http.post
+                args:
+                  url: ${"https://sqladmin.googleapis.com/sql/v1beta4/projects/" +project_id + "/instances/" + sql_instance_name + "/databases"}
+                  auth:
+                    type: OAuth2
+                  body:
+                    name: ${db}
+
+subworkflow_create_sql_users:
+  params: [users, project_id, sql_instance_name]
+  steps:
+    - create_users_loop:
+        for:
+          value: user
+          in: ${users}
+          steps:
+            - create_user:
+                call: http.post
+                args:
+                  url: ${"https://sqladmin.googleapis.com/sql/v1beta4/projects/" +project_id + "/instances/" + sql_instance_name + "/users"}
+                  auth:
+                    type: OAuth2
+                  body:
+                    name: ${user.name}
+                    password: ${user.password}
+
+subworkflow_delete_sql_dbs:
+  params: [dbs, project_id, sql_instance_name]
+  steps:
+    - delete_dbs_loop:
+        for:
+          value: db
+          in: ${dbs}
+          steps:
+            - delete_db:
+                call: http.delete
+                args:
+                  url: ${"https://sqladmin.googleapis.com/sql/v1beta4/projects/" +project_id + "/instances/" + sql_instance_name + "/databases/" + db}
+                  auth:
+                    type: OAuth2
+
+subworkflow_delete_sql_users:
+  params: [users, project_id, sql_instance_name]
+  steps:
+    - delete_users_loop:
+        for:
+          value: user
+          in: ${users}
+          steps:
+            - delete_user:
+                call: http.delete
+                args:
+                  url: ${"https://sqladmin.googleapis.com/sql/v1beta4/projects/" +project_id + "/instances/" + sql_instance_name + "/users?name=" + user.name + "&host=%"}
+                  auth:
+                    type: OAuth2

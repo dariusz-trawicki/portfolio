@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Iris Classifier</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:       #0b1a0e;
+            --surface:  #111f14;
+            --border:   rgba(180, 160, 110, 0.25);
+            --gold:     #c4a882;
+            --iris:     #b8a9d4;
+            --text:     #f0ebe0;
+            --muted:    rgba(240, 235, 224, 0.45);
+            --ff-serif: 'Cormorant Garamond', Georgia, serif;
+            --ff-mono:  'DM Mono', 'Courier New', monospace;
+        }
+
+        html { font-size: 16px; }
+
+        body {
+            background-color: var(--bg);
+            background-image:
+                radial-gradient(ellipse 70% 50% at 50% -10%, rgba(184, 169, 212, 0.07) 0%, transparent 60%),
+                url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+            color: var(--text);
+            font-family: var(--ff-serif);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2rem 1rem;
+        }
+
+        .card {
+            width: 100%;
+            max-width: 480px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            padding: 3rem 3.5rem 3.5rem;
+            position: relative;
+            animation: rise 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        /* Corner marks */
+        .card::before, .card::after {
+            content: '';
+            position: absolute;
+            width: 18px; height: 18px;
+            border-color: var(--gold);
+            border-style: solid;
+            opacity: 0.6;
+        }
+        .card::before { top: -1px; left: -1px; border-width: 2px 0 0 2px; }
+        .card::after  { bottom: -1px; right: -1px; border-width: 0 2px 2px 0; }
+
+        /* Iris SVG motif */
+        .motif {
+            display: block;
+            margin: 0 auto 2rem;
+            opacity: 0.55;
+            animation: rise 1s 0.15s cubic-bezier(0.16, 1, 0.3, 1) both;
+        }
+
+        .eyebrow {
+            font-family: var(--ff-mono);
+            font-size: 0.65rem;
+            letter-spacing: 0.25em;
+            color: var(--gold);
+            text-transform: uppercase;
+            text-align: center;
+            margin-bottom: 0.6rem;
+            animation: fadein 0.6s 0.3s both;
+        }
+
+        h1 {
+            font-size: 2rem;
+            font-weight: 300;
+            font-style: italic;
+            line-height: 1.15;
+            text-align: center;
+            color: var(--text);
+            margin-bottom: 0.35rem;
+            animation: fadein 0.6s 0.35s both;
+        }
+
+        .subtitle {
+            font-family: var(--ff-mono);
+            font-size: 0.65rem;
+            letter-spacing: 0.18em;
+            color: var(--muted);
+            text-align: center;
+            text-transform: uppercase;
+            margin-bottom: 2.8rem;
+            animation: fadein 0.6s 0.4s both;
+        }
+
+        .divider {
+            width: 40px;
+            height: 1px;
+            background: linear-gradient(to right, transparent, var(--gold), transparent);
+            margin: 0 auto 2.8rem;
+            animation: fadein 0.6s 0.45s both;
+        }
+
+        form { display: flex; flex-direction: column; gap: 1.4rem; }
+
+        .field {
+            display: flex;
+            flex-direction: column;
+            gap: 0.4rem;
+            animation: fadein 0.5s both;
+        }
+        .field:nth-child(1) { animation-delay: 0.5s; }
+        .field:nth-child(2) { animation-delay: 0.58s; }
+        .field:nth-child(3) { animation-delay: 0.66s; }
+        .field:nth-child(4) { animation-delay: 0.74s; }
+
+        label {
+            font-family: var(--ff-mono);
+            font-size: 0.6rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            color: var(--gold);
+        }
+
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            border-bottom: 1px solid var(--border);
+            transition: border-color 0.25s;
+        }
+        .input-row:focus-within {
+            border-color: var(--iris);
+        }
+
+        .unit {
+            font-family: var(--ff-mono);
+            font-size: 0.6rem;
+            color: var(--muted);
+            letter-spacing: 0.05em;
+            flex-shrink: 0;
+            padding-bottom: 0.5rem;
+        }
+
+        input[type="text"] {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: var(--text);
+            font-family: var(--ff-mono);
+            font-size: 1rem;
+            font-weight: 300;
+            padding: 0.5rem 0;
+            width: 100%;
+            caret-color: var(--iris);
+        }
+        input[type="text"]::placeholder { color: rgba(240, 235, 224, 0.18); }
+
+        .submit-row {
+            margin-top: 0.8rem;
+            animation: fadein 0.5s 0.82s both;
+        }
+
+        button[type="submit"] {
+            width: 100%;
+            padding: 0.9rem 1.5rem;
+            background: transparent;
+            border: 1px solid var(--gold);
+            color: var(--gold);
+            font-family: var(--ff-mono);
+            font-size: 0.65rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: background 0.3s, color 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+        button[type="submit"]::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: var(--gold);
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 0;
+        }
+        button[type="submit"]:hover::after { transform: scaleX(1); }
+        button[type="submit"]:hover { color: var(--bg); box-shadow: 0 0 24px rgba(196, 168, 130, 0.2); }
+        button[type="submit"] span { position: relative; z-index: 1; }
+
+        .result {
+            margin-top: 2.2rem;
+            padding: 1.2rem 1.5rem;
+            border: 1px solid var(--border);
+            border-left: 3px solid var(--iris);
+            background: rgba(184, 169, 212, 0.05);
+            animation: fadein 0.5s both;
+        }
+        .result-label {
+            font-family: var(--ff-mono);
+            font-size: 0.58rem;
+            letter-spacing: 0.22em;
+            text-transform: uppercase;
+            color: var(--iris);
+            margin-bottom: 0.5rem;
+        }
+        .result-text {
+            font-size: 1.35rem;
+            font-weight: 300;
+            font-style: italic;
+            color: var(--text);
+        }
+
+        @keyframes rise {
+            from { opacity: 0; transform: translateY(20px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadein {
+            from { opacity: 0; }
+            to   { opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="card">
+
+        <!-- Iris flower SVG motif -->
+        <svg class="motif" width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M24 4 C24 4 18 14 18 24 C18 34 24 44 24 44 C24 44 30 34 30 24 C30 14 24 4 24 4Z" stroke="#b8a9d4" stroke-width="0.8" fill="rgba(184,169,212,0.08)"/>
+            <path d="M4 24 C4 24 14 18 24 18 C34 18 44 24 44 24 C44 24 34 30 24 30 C14 30 4 24 4 24Z" stroke="#b8a9d4" stroke-width="0.8" fill="rgba(184,169,212,0.06)"/>
+            <path d="M8 8 C8 8 14 16 24 24 C34 32 40 40 40 40" stroke="#c4a882" stroke-width="0.6" opacity="0.5"/>
+            <path d="M40 8 C40 8 34 16 24 24 C14 32 8 40 8 40" stroke="#c4a882" stroke-width="0.6" opacity="0.5"/>
+            <circle cx="24" cy="24" r="2.5" fill="#b8a9d4" opacity="0.7"/>
+        </svg>
+
+        <p class="eyebrow">Botanical Classification</p>
+        <h1>Iris Species<br>Identifier</h1>
+        <p class="subtitle">Fisher's Iris Dataset · 1936</p>
+        <div class="divider"></div>
+
+        <form action="/predict" method="POST">
+            <div class="field">
+                <label for="sepal_length">Sepal Length</label>
+                <div class="input-row">
+                    <input type="text" id="sepal_length" name="sepal_length" placeholder="5.1" required>
+                    <span class="unit">cm</span>
+                </div>
+            </div>
+            <div class="field">
+                <label for="sepal_width">Sepal Width</label>
+                <div class="input-row">
+                    <input type="text" id="sepal_width" name="sepal_width" placeholder="3.5" required>
+                    <span class="unit">cm</span>
+                </div>
+            </div>
+            <div class="field">
+                <label for="petal_length">Petal Length</label>
+                <div class="input-row">
+                    <input type="text" id="petal_length" name="petal_length" placeholder="1.4" required>
+                    <span class="unit">cm</span>
+                </div>
+            </div>
+            <div class="field">
+                <label for="petal_width">Petal Width</label>
+                <div class="input-row">
+                    <input type="text" id="petal_width" name="petal_width" placeholder="0.2" required>
+                    <span class="unit">cm</span>
+                </div>
+            </div>
+
+            <div class="submit-row">
+                <button type="submit"><span>Classify Specimen</span></button>
+            </div>
+        </form>
+
+        {% if prediction_text %}
+        <div class="result">
+            <p class="result-label">Classification Result</p>
+            <p class="result-text">{{ prediction_text }}</p>
+        </div>
+        {% endif %}
+
+        {% if error_text %}
+        <div class="result" style="border-left-color: #c47882;">
+            <p class="result-label" style="color: #c47882;">Input Error</p>
+            <p class="result-text" style="font-size: 1rem;">{{ error_text }}</p>
+        </div>
+        {% endif %}
+
+    </div>
+</body>
+</html>

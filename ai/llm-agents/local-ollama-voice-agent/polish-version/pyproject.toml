@@ -1,0 +1,16 @@
+[project]
+name = "local-voice-agent"
+version = "0.1.0"
+description = "Local Polish voice assistant using FastRTC, Whisper and macOS 'say'"
+readme = "README.md"
+requires-python = ">=3.13"
+
+dependencies = [
+    "fastrtc[stt]>=0.0.19",
+    "faster-whisper>=1.0.0",
+    "ollama>=0.4.7",
+    "pydub>=0.25.1",
+    "librosa>=0.10.0",
+    "numpy>=1.24",
+    "loguru>=0.7.3",
+]

@@ -1,0 +1,11 @@
+[project]
+name = "scipy-optimization"
+version = "0.1.0"
+description = "Scipy Optimization Example"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "matplotlib>=3.10.8",
+    "numpy>=2.4.1",
+    "scipy>=1.17.0",
+]

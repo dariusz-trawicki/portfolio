@@ -1,0 +1,15 @@
+- name: Configure base + web
+  hosts: role__web
+  connection: amazon.aws.aws_ssm
+  gather_facts: yes
+  become: true 
+  become_method: sudo
+  become_user: root
+
+  vars:
+    ansible_aws_ssm_bucket_name: tf-state-ansible-exp-123
+    ansible_aws_ssm_region: eu-central-1
+
+  roles:
+    - base
+    - web

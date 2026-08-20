@@ -1,0 +1,15 @@
+# === Required ===
+project_id    = "<your-project-id>"
+sql_user_name = "wordpress"
+
+# === Location ===
+region        = "<your-gcp-region>"
+zone          = "<your-gcp-zone>"
+gke_num_nodes = 1
+
+# === HTTPS / domain ===
+# Step 1: leave enable_https = false.
+# Terraform will create the infrastructure and reserve a static IP address.
+
+enable_https      = false
+wordpress_domains = ["your-domain.com", "www.your-domain.com"]

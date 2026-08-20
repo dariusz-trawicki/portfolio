@@ -1,0 +1,14 @@
+pandas
+numpy
+setuptools
+psycopg2-binary
+scikit-learn
+imbalanced-learn
+redis
+flask
+prometheus_client
+apache-airflow-providers-google
+apache-airflow-providers-postgres
+sqlalchemy
+mlflow
+imbalanced-learn

@@ -1,0 +1,4 @@
+project_id   = "your-project-id"
+cluster_name = "mlops-tests-gke"
+zone         = "europe-central2-a"
+config_repo_url = "git@github.com:owner/machines-efficiency-k8s-manifests.git"

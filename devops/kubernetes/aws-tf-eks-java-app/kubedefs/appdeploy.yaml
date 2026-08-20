@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vproapp
+  labels: 
+    app: vproapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vproapp
+  template:
+    metadata:
+      labels:
+        app: vproapp
+    spec:
+      containers:
+      - name: vproapp
+        image: vprocontainers/vprofileapp
+        imagePullPolicy: Always
+        ports:
+        - name: vproapp-port
+          containerPort: 8080
+      initContainers:
+      - name: init-mydb
+        image: busybox:1.36
+        command: ['sh','-c']
+        args:
+          - |
+            until nc -z vprodb 3306; do
+              echo "waiting for db"; sleep 2;
+            done
+      - name: init-memcache
+        image: busybox:1.36
+        command: ['sh','-c']
+        args:
+          - |
+            until nc -z vprocache01 11211; do
+              echo "waiting for memcache"; sleep 2;
+            done

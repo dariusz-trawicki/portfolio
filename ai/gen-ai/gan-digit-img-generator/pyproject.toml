@@ -1,0 +1,11 @@
+[project]
+name = "gan-mnist"
+version = "0.1.0"
+description = "GAN trained from scratch on MNIST — live interactive window"
+requires-python = ">=3.10"
+dependencies = [
+    "torch>=2.0.0",
+    "torchvision>=0.15.0",
+    "opencv-python>=4.9.0",
+    "numpy>=1.24.0",
+]

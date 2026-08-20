@@ -1,0 +1,8 @@
+[project]
+name = "object-tracking"
+version = "0.1.0"
+description = "Object tracking demo using OpenCV (CSRT, KCF, MOSSE, MIL)"
+requires-python = ">=3.10"
+dependencies = [
+    "opencv-contrib-python>=4.9.0",
+]

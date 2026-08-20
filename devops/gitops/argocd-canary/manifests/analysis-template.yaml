@@ -1,0 +1,33 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AnalysisTemplate
+metadata:
+  name: http-error-rate
+spec:
+  args:
+    - name: service-name
+  metrics:
+    - name: error-rate
+      interval: 15s
+      count: 2
+      failureLimit: 0
+      provider:
+        job:
+          spec:
+            backoffLimit: 0
+            template:
+              spec:
+                restartPolicy: Never
+                containers:
+                  - name: check
+                    image: curlimages/curl:8.8.0
+                    command: [sh, -c]
+                    args:
+                      - |
+                        fail=0
+                        for i in $(seq 1 20); do
+                          code=$(curl -s -o /dev/null -w '%{http_code}' \
+                            http://{{args.service-name}}/)
+                          [ "$code" = "200" ] || fail=$((fail+1))
+                        done
+                        echo "wrong answers: $fail/20"
+                        [ "$fail" -le 1 ]

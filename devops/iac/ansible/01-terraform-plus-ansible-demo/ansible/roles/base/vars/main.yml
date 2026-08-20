@@ -1,0 +1,4 @@
+curl_pkg_name: >-
+  {{ 'curl-minimal'
+     if ansible_distribution == 'Amazon' and (ansible_distribution_major_version | int) >= 2023
+     else 'curl' }}

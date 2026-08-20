@@ -1,0 +1,107 @@
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: drift-detector
+  namespace: mlops
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: drift-detector-role
+  namespace: mlops
+rules:
+- apiGroups: ["batch"]
+  resources: ["jobs"]
+  verbs: ["create", "get", "list", "delete"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: drift-detector-rolebinding
+  namespace: mlops
+subjects:
+- kind: ServiceAccount
+  name: drift-detector
+  namespace: mlops
+roleRef:
+  kind: Role
+  name: drift-detector-role
+  apiGroup: rbac.authorization.k8s.io
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: drift-detector
+  namespace: mlops
+  labels:
+    app: drift-detector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: drift-detector
+  template:
+    metadata:
+      labels:
+        app: drift-detector
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8002"
+        prometheus.io/path: "/metrics"
+    spec:
+      serviceAccountName: drift-detector
+      containers:
+      - name: detector
+        image: mlops-drift-detector:latest
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8002
+          name: http
+        env:
+        - name: WINDOW_SIZE
+          value: "100"
+        - name: DRIFT_THRESHOLD
+          value: "0.05"
+        - name: CHECK_FREQUENCY
+          value: "20"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8002
+          initialDelaySeconds: 10
+          periodSeconds: 30
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8002
+          initialDelaySeconds: 5
+          periodSeconds: 10
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "200m"
+          limits:
+            memory: "512Mi"
+            cpu: "500m"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: drift-detector
+  namespace: mlops
+  labels:
+    app: drift-detector
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8002
+    targetPort: 8002
+    protocol: TCP
+    name: http
+  selector:
+    app: drift-detector

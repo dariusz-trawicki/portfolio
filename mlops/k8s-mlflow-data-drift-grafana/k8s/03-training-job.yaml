@@ -1,0 +1,89 @@
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: model-training
+  namespace: mlops
+  labels:
+    app: training
+spec:
+  ttlSecondsAfterFinished: 3600  # Remove after 1 hour
+  template:
+    metadata:
+      labels:
+        app: training
+    spec:
+      restartPolicy: OnFailure
+      containers:
+      - name: trainer
+        image: mlops-training:latest
+        imagePullPolicy: Never  # For local image in Minikube
+        env:
+        - name: MLFLOW_TRACKING_URI
+          value: "http://mlflow:5000"
+        - name: N_ESTIMATORS
+          value: "100"
+        - name: MAX_DEPTH
+          value: "5"
+        volumeMounts:
+        - name: models
+          mountPath: /models
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+      volumes:
+      - name: models
+        persistentVolumeClaim:
+          claimName: models-pvc
+
+---
+# CronJob for automatic retraining (daily at 2:00 AM)
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: model-retraining
+  namespace: mlops
+  labels:
+    app: retraining
+spec:
+  schedule: "0 2 * * *"  # Daily at 2:00 AM
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      ttlSecondsAfterFinished: 3600
+      template:
+        metadata:
+          labels:
+            app: training
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: trainer
+            image: mlops-training:latest
+            imagePullPolicy: Never
+            env:
+            - name: MLFLOW_TRACKING_URI
+              value: "http://mlflow:5000"
+            - name: N_ESTIMATORS
+              value: "100"
+            - name: MAX_DEPTH
+              value: "5"
+            volumeMounts:
+            - name: models
+              mountPath: /models
+            resources:
+              requests:
+                memory: "512Mi"
+                cpu: "500m"
+              limits:
+                memory: "1Gi"
+                cpu: "1000m"
+          volumes:
+          - name: models
+            persistentVolumeClaim:
+              claimName: models-pvc

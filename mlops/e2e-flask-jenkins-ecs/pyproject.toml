@@ -1,0 +1,9 @@
+[project]
+name = "MLOps-Project"
+version = "0.1.0"
+description = "MLOps Project"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "scikit-learn>=1.8.0",
+]

@@ -1,0 +1,7 @@
+- name: Ensure basic packages
+  become: true
+  package:
+    name:
+      - git
+      - "{{ curl_pkg_name }}"
+    state: present

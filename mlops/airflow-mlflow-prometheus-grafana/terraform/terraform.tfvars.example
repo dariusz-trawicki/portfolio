@@ -1,0 +1,4 @@
+project_id          = "your-project-id" 
+region              = "europe-central2"
+environment         = "dev"
+allow_airflow_write = false

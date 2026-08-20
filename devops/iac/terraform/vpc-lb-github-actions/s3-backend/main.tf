@@ -1,0 +1,13 @@
+provider "aws" {
+  region = "eu-central-1"
+}
+
+resource "aws_s3_bucket" "tf_state" {
+  bucket = "terraform-vpc-12345" # name must be unick globally
+
+  force_destroy = true # for test only
+
+  tags = {
+    Name = "Terraform State Bucket"
+  }
+}
