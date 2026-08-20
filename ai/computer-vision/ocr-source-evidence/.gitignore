@@ -1,0 +1,22 @@
+.env
+.env.local
+
+work/
+result_regex.png
+result_regex.json
+result_llm.png
+result_llm.json
+result_azure.png
+result_azure.json
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/.terraform.lock.hcl
+terraform/terraform.tfvars
