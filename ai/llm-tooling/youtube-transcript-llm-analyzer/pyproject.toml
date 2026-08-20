@@ -1,0 +1,11 @@
+[project]
+name = "youtube-transcript-llm-analyzer"
+version = "0.1.0"
+description = ""
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=0.86.0",
+    "openai-whisper>=20250625",
+    "python-dotenv>=1.2.2",
+    "yt-dlp>=2026.3.17",
+]
