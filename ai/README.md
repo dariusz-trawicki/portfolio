@@ -10,7 +10,7 @@ from experiments to models running in the cloud.
 | [llm-rag](llm-rag/) | Retrieval-augmented generation: semantic search, vector stores, agentic retrieval |
 | [llm-agents](llm-agents/) | Function calling, tool use, voice and multi-step agent workflows |
 | [llm-deployment](llm-deployment/) | Serving LLMs — managed APIs, serverless, self-hosted GPU instances |
-| [llm-fine-tuning](fine-tuning/) | Adapting open models to domain-specific tasks |
+| [fine-tuning](fine-tuning/) | Adapting open models to domain-specific tasks |
 | [llm-tooling](llm-tooling/) | Applied LLM utilities and Claude Code skill-chain workflows |
 | [computer-vision](computer-vision/) | Classification, detection, tracking, pose estimation, OCR |
 | [gen-ai](gen-ai/) | Generative image models |
