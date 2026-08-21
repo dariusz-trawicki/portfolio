@@ -2,7 +2,15 @@
 
 ## Structure
 
-- **[ai](ai/)** — [RAG](ai/llm-rag/), [agents](ai/llm-agents/), [fine-tuning](ai/fine-tuning/), [LLM deployment](ai/llm-deployment/), [computer vision](ai/computer-vision/), [generative models](ai/gen-ai/), [predictive modeling & optimization](ai/predictive-modeling-optimization/)
+- **[ai](ai/)**
+  - [llm-rag](ai/llm-rag/) — retrieval-augmented generation, semantic search, agentic retrieval
+  - [llm-agents](ai/llm-agents/) — function calling, tool use, voice agents
+  - [llm-deployment](ai/llm-deployment/) — serving LLMs: managed, serverless, self-hosted
+  - [fine-tuning](ai/fine-tuning/) — adapting open models to domain tasks
+  - [llm-tooling](ai/llm-tooling/) — applied LLM utilities and skill-chain workflows
+  - [computer-vision](ai/computer-vision/) — classification, tracking, pose estimation, OCR
+  - [gen-ai](ai/gen-ai/) — generative image models
+  - [predictive-modeling-optimization](ai/predictive-modeling-optimization/) — classical ML and mathematical optimization
 - **[mlops](mlops/)** — experiment tracking, CI/CD for ML, drift monitoring, end-to-end pipelines
 - **[data-engineering](data-engineering/)** — Kafka, Airflow, Spark, IoT streaming, ETL
 - **[devops](devops/)** — Terraform, Terragrunt, Ansible, Kubernetes, GitOps, CI/CD
