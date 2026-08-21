@@ -1,6 +1,4 @@
-# Nonlinear vs linearized network model — a guide
-
-**Who this is for:** someone who knows Python but has never worked with hydraulic modelling or integer programming before.
+# Nonlinear vs linearized water distribution network model
 
 **What the script does:** it solves the same water distribution network with two methods and shows how much the mathematical simplification costs — the simplification we need in order to *optimize* the network later.
 
