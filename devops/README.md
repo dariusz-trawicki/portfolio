@@ -22,7 +22,7 @@ across AWS and GCP.
 |---|---|---|
 | [aws-eks](iac/terraform/aws-eks/) | Managed Kubernetes cluster provisioned end to end | Terraform, AWS EKS |
 | [aws-vpc-lb-github-actions](iac/terraform/aws-vpc-lb-github-actions/) | Network topology and load balancing, applied through CI with remote state | Terraform, AWS VPC, GitHub Actions, S3 |
-| [aws-ec2-serve-llm-bielik](../ai/llm-deployment/aws-ec2-serve-llm-bielik/) ↗ | GPU instance provisioned and configured to serve a Polish LLM — *full project in ai/llm-deployment* | Terraform, EC2, Docker |
+| [aws-ec2-serve-llm-bielik](../ai/llm-deployment/aws-ec2-serve-llm-bielik/) | GPU instance provisioned and configured to serve a Polish LLM — *full project in ai/llm-deployment* | Terraform, EC2, Docker |
 | [gcp-cloud-run](iac/terraform/gcp-cloud-run/) | Serverless containers behind a load balancer on Google Cloud | Terraform, Cloud Run, GCP |
 | [terragrunt/01-managing-remote-state](iac/terragrunt/01-managing-remote-state/) | Remote state management and DRY configuration across environments | Terragrunt, Terraform, S3 |
 | [ansible/01-terraform-plus-ansible-demo](iac/ansible/01-terraform-plus-ansible-demo/) | Terraform provisions the infrastructure, Ansible configures the hosts — the standard IaC split between provisioning and configuration management | Terraform, Ansible, AWS |
