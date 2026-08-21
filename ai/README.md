@@ -33,8 +33,9 @@ from experiments to models running in the cloud.
 | Project | Description | Stack |
 |---|---|---|
 | [llm-agents/agent-pydanticai-function-calling](llm-agents/agent-pydanticai-function-calling/) | Type-safe function calling with structured outputs | PydanticAI, Python |
-| [llm-agents/langgraf-openai-tavily](llm-agents/langgraf-openai-tavily/) | Graph-based agent with web search as a tool | LangGraph, OpenAI, Tavily |
+| [llm-agents/langgraph-openai-tavily](llm-agents/langgraph-openai-tavily/) | Graph-based agent with web search as a tool | LangGraph, OpenAI, Tavily |
 | [llm-agents/realtime-groq-gpt-voice-chat](llm-agents/realtime-groq-gpt-voice-chat/) | Low-latency voice conversation | Groq, OpenAI, streaming audio |
+| [llm-agents/local-text-chat-with-tavily-ollama](llm-agents/local-text-chat-with-tavily-ollama/) | Local model with optional web search — offline and online agent variants side by side | Ollama, Tavily, Python |
 
 ### Deployment & fine-tuning
 
@@ -60,6 +61,7 @@ from experiments to models running in the cloud.
 
 | Project | Description | Stack |
 |---|---|---|
+| [water-network-optimization](ai/predictive-modeling-optimization/water-network-optimization/) | Hydraulic network optimization compared two ways: nonlinear solver vs piecewise linearization with SOS2 constraints | EPANET, Pyomo/MILP, Python |
 | [predictive-modeling-optimization/scipy-optimization](predictive-modeling-optimization/scipy-optimization/) | Constrained and unconstrained optimization problems | SciPy, NumPy |
 | [predictive-modeling-optimization/mobile-price-tf-aws-sagemaker](predictive-modeling-optimization/mobile-price-tf-aws-sagemaker/) | Classification model trained and deployed on SageMaker, infrastructure as code | scikit-learn, SageMaker, Terraform |
 | [predictive-modeling-optimization/student-scores-prediction-gridsearch](predictive-modeling-optimization/student-scores-prediction-gridsearch/) | Full ML pipeline with modular components, hyperparameter search and a serving app | scikit-learn, Flask, pandas |
