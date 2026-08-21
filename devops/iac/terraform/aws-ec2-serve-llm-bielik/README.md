@@ -1,6 +1,6 @@
 # Serving Bielik LLM on AWS EC2
 
-> **Moved — full project in [ai/llm-deployment/bielik-on-aws-ec2](../../../../ai/llm-deployment/bielik-on-aws-ec2/)**
+> **Moved — full project in [ai/llm-deployment/aws-ec2-serve-llm-bielik](../../../../ai/llm-deployment/aws-ec2-serve-llm-bielik/)**
 
 A GPU instance provisioned with Terraform and configured to serve Bielik, a Polish
 open-weight LLM, behind a containerised inference API.
