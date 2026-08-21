@@ -1,0 +1,24 @@
+$schema: https://azuremlschemas.azureedge.net/latest/commandJob.schema.json
+
+display_name: pjm-cnn-train
+experiment_name: sign-language-recognition
+
+command: >
+  python train_classifier_azure.py
+  --data_dir ${{inputs.keypoints}}
+  --epochs 200
+  --batch_size 8
+  --lr 0.001
+
+inputs:
+  keypoints:
+    type: uri_folder
+    path: azureml://datastores/keypoints_store/paths/
+
+environment:
+  image: mcr.microsoft.com/azureml/openmpi4.1.0-ubuntu20.04
+  conda_file: conda.yml
+
+compute: azureml:cpu-cluster
+
+code: .

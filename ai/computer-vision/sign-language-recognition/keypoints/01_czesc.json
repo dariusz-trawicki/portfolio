@@ -1,0 +1,466 @@
+{
+  "video": "data/videos/01_czesc.mp4",
+  "fps": 25.0,
+  "width": 480,
+  "height": 320,
+  "n_frames": 75,
+  "vec_dim": 225,
+  "stats": {
+    "pose": 75,
+    "left_hand": 3,
+    "right_hand": 35,
+    "total": 75
+  },
+  "frames": [
+    {
+      "frame": 0,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 1,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 2,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 3,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 4,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 5,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 6,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 7,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 8,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 9,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 10,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 11,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 12,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 13,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 14,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 15,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 16,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 17,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 18,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 19,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 20,
+      "has_pose": true,
+      "has_left": true,
+      "has_right": true
+    },
+    {
+      "frame": 21,
+      "has_pose": true,
+      "has_left": true,
+      "has_right": true
+    },
+    {
+      "frame": 22,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 23,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 24,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 25,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 26,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 27,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 28,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 29,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 30,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 31,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 32,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 33,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 34,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 35,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 36,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 37,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 38,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 39,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 40,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 41,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 42,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 43,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 44,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 45,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 46,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 47,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 48,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 49,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 50,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": true
+    },
+    {
+      "frame": 51,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 52,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 53,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 54,
+      "has_pose": true,
+      "has_left": true,
+      "has_right": false
+    },
+    {
+      "frame": 55,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 56,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 57,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 58,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 59,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 60,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 61,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 62,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 63,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 64,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 65,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 66,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 67,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 68,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 69,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 70,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 71,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 72,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 73,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    },
+    {
+      "frame": 74,
+      "has_pose": true,
+      "has_left": false,
+      "has_right": false
+    }
+  ]
+}

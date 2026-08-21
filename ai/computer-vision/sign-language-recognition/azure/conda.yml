@@ -1,0 +1,11 @@
+name: pjm-env
+channels:
+  - defaults
+  - pytorch
+dependencies:
+  - python=3.11
+  - pip:
+    - torch==2.2.0
+    - numpy
+    - mlflow
+    - azureml-mlflow
