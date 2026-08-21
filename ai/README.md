@@ -45,3 +45,21 @@ from experiments to models running in the cloud.
 | [llm-deployment/azure-openai](llm-deployment/azure-openai/) | LLM integration on Azure, with and without IaC | Azure OpenAI, Terraform |
 | [fine-tuning/pllum-kaggle-pl](fine-tuning/pllum-kaggle-pl/) | Fine-tuning a Polish open model for a domain task | PyTorch, HuggingFace, PEFT |
 | [fine-tuning/news-class](fine-tuning/news-class/) | Fine-tuned classifier for news categorization | Transformers, PyTorch |
+| [llm-deployment/idps-aws-bedrock](llm-deployment/idps-aws-bedrock/) | Intelligent document processing — invoices in JPG, PDF and PNG parsed by a multimodal model | AWS Bedrock, Python |
+
+### Computer vision
+
+| Project | Description | Stack |
+|---|---|---|
+| [computer-vision/sign-language-recognition](computer-vision/sign-language-recognition/) | Gesture recognition from video — keypoint extraction, augmentation and classifier training, with local and cloud inference paths | MediaPipe, PyTorch, Azure |
+| [computer-vision/ocr-source-evidence](computer-vision/ocr-source-evidence/) | Document data extraction compared three ways: regex, LLM, and managed OCR | Azure OCR, LLM API, Terraform |
+| [computer-vision/object-tracking](computer-vision/object-tracking/) | Multi-object tracking across video frames | OpenCV, Python |
+| [computer-vision/pose-estimation](computer-vision/pose-estimation/) | Human pose keypoint detection in real time | MediaPipe, OpenCV |
+
+### Predictive modeling & optimization
+
+| Project | Description | Stack |
+|---|---|---|
+| [predictive-modeling-optimization/scipy-optimization](predictive-modeling-optimization/scipy-optimization/) | Constrained and unconstrained optimization problems | SciPy, NumPy |
+| [predictive-modeling-optimization/mobile-price-tf-aws-sagemaker](predictive-modeling-optimization/mobile-price-tf-aws-sagemaker/) | Classification model trained and deployed on SageMaker, infrastructure as code | scikit-learn, SageMaker, Terraform |
+| [predictive-modeling-optimization/student-scores-prediction-gridsearch](predictive-modeling-optimization/student-scores-prediction-gridsearch/) | Full ML pipeline with modular components, hyperparameter search and a serving app | scikit-learn, Flask, pandas |
