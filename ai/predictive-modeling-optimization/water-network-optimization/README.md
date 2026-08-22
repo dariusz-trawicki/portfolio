@@ -330,45 +330,46 @@ optimality in ~80 s. Use `native` if you have Gurobi or CPLEX.
 ![Results](schedule.png)
 
 ```
-hour tariff  on   q_pump  h_pump  power  tank_lv  q_tank   H_B     H_C   margin
-   0   0.35   0      0.0    0.00    0.0    3.000   -51.8  103.53  103.59   6.59
-   3   0.35   1    198.7   99.25   67.2    2.103   160.7  108.34  106.33   9.33
-   5   0.35   1    196.5   99.72   66.8    4.174   121.8  108.73  107.12  10.12
-   7   0.75   0      0.0    0.00    0.0    4.143  -166.8  101.27  101.72   4.72
-   9   0.75   0      0.0    0.00    0.0    1.958  -138.0  100.14  100.48   3.48
-  10   0.75   1    211.3   96.40   69.7    1.038    84.8  105.19  103.77   6.77
-  16   0.75   1    201.6   98.62   67.8    4.538    69.3  107.48  106.25   9.25
-  17   1.10   0      0.0    0.00    0.0    5.000  -166.8  102.13  102.58   5.58
-  20   1.10   0      0.0    0.00    0.0    1.627  -132.2  100.02  100.34   3.34
-  21   1.10   1    185.9  101.98   64.9    0.745    76.7  111.00  109.83  12.83
-  23   0.35   1    202.5   98.43   67.9    2.072   139.3  107.42  105.59   8.59
-
+hour tariff  on   q_pump  h_pump  power  tank_lv  q_tank   H_B   H_C   margin
+           [-]   [m3/h]     [m]   [kW]      [m]  [m3/h]     [m]     [m]      [m]
+-----------------------------------------------------------------------------
+   0   0.35   0     -0.0    0.00    0.0    3.000   -51.8  103.54  103.59     6.59
+   1   0.35   0     -0.0    0.00    0.0    2.655   -43.7  103.31  103.35     6.35
+   2   0.35   0     -0.0    0.00    0.0    2.364   -39.1  103.08  103.12     6.12
+   3   0.35   1    198.7   99.24   67.2    2.103   160.8  108.34  106.31     9.31
+   4   0.35   1    196.3   99.77   66.8    3.175   150.3  108.87  106.98     9.98
+   5   0.35   1    196.7   99.68   66.9    4.176   122.0  108.72  107.12    10.12
+   6   0.75   0      0.0    0.00    0.0    4.990  -126.5  103.65  103.92     6.92
+   7   0.75   0      0.0    0.00    0.0    4.146  -166.8  101.30  101.71     4.71
+   8   0.75   0      0.0    0.00    0.0    3.035  -161.0  100.44  100.82     3.82
+   9   0.75   0      0.0    0.00    0.0    1.961  -138.0  100.25  100.55     3.55
+  10   0.75   1    205.0   97.89   68.4    1.041    78.5  106.73  105.46     8.46
+  11   0.75   1    211.0   96.47   69.6    1.565    90.3  105.27  103.86     6.86
+  12   0.75   1    205.0   97.89   68.4    2.166    84.2  106.75  105.42     8.42
+  13   0.75   1    205.0   97.89   68.4    2.728    90.0  106.76  105.39     8.39
+  14   0.75   1    204.2   98.05   68.3    3.328    95.0  106.95  105.54     8.54
+  15   0.75   1    201.1   98.72   67.7    3.961    86.1  107.63  106.32     9.32
+  16   0.75   1    201.9   98.55   67.8    4.536    69.7  107.41  106.22     9.22
+  17   1.10   0      0.0    0.00    0.0    5.000  -166.8  102.15  102.57     5.57
+  18   1.10   0      0.0    0.00    0.0    3.888  -178.2  100.55  101.02     4.02
+  19   1.10   0      0.0    0.00    0.0    2.700  -161.0  100.10  100.49     3.49
+  20   1.10   0      0.0    0.00    0.0    1.627  -132.2  100.10  100.39     3.39
+  21   1.10   1    185.5  102.05   64.9    0.745    76.3  111.10  109.97    12.97
+  22   0.35   1    208.7   97.03   69.1    1.254   122.4  105.95  104.21     7.21
+  23   0.35   1    202.8   98.36   68.0    2.070   139.5  107.38  105.52     8.52
+--------------------------------------------------------------------------------------------------------
 pump run time            : 13.0 h  (3 start-ups)
-volume pumped into network: 2,622.0 m3   (100% of demand)
-tightest pressure margin : 3.34 m above the limit
-throttle valve loss      : max 7.22 m, mean over running hours 0.87 m
+volume pumped into network: 2,622.0 m3
+total network demand     : 2,622.0 m3  (100% through the pump)
+tightest pressure margin : 3.39 m above the limit
+throttle valve loss      : max 7.40 m, mean over running hours 0.94 m
 tank level  start / end  : 3.000 m / 3.000 m
-electrical energy        : 881.48 kWh   (0.3362 kWh/m3)
-TOTAL                    : 593.68 PLN
-same energy at flat average tariff 0.690 PLN/kWh: 607.86 PLN
+electrical energy        : 881.49 kWh
+specific energy          : 0.3362 kWh/m3
+energy cost              : 548.60 PLN
+start-up cost            : 45.00 PLN
+TOTAL OBJECTIVE          : 593.60 PLN
 ```
-
-Things worth reading off this:
-
-* The pump charges the tank to 5.00 m by 17:00 and rides out most of the
-  1.10 evening block — but it **cannot skip it entirely**. By 21:00 the tank is
-  down to 0.745 m against a 0.5 m floor, so it is forced to start at peak
-  tariff. Storage, not tariff, is the binding resource: the tank holds 675 m³
-  against 747 m³ of demand in the 17:00–21:00 block.
-* At 20:00 the pressure margin falls to 3.34 m. The tank cannot be drawn any
-  lower without violating the 25 m service pressure at C — the level bound and
-  the pressure bound become active at nearly the same moment.
-* Flow reverses in p4 every cycle (+160 m³/h filling, −167 m³/h supplying),
-  which is exactly why that link needs a **signed** breakpoint grid.
-* Load shifting is worth only 14 PLN/day here (594 vs 608 at the flat average).
-  That is honest: with storage this tight there is not much to shift. Doubling
-  the tank is the intervention worth costing, and the model is the tool to
-  price it.
 
 ## 6. Linearisation accuracy
 
