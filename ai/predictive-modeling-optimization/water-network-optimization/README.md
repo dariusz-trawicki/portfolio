@@ -1,856 +1,530 @@
-# Nonlinear vs linearized water distribution network model
+# Pump scheduling on a looped water network — SOS2 linearisation + MILP
 
-**What the script does:** it solves the same water distribution network with two methods and shows how much the mathematical simplification costs — the simplification we need in order to *optimize* the network later.
-
-**Reading time:** ~25 minutes. **Run time:** ~30 seconds.
-
----
-
-## Table of contents
-
-1. [Quick start](#1-quick-start)
-2. [The problem in three sentences](#2-the-problem-in-three-sentences)
-3. [Glossary](#3-glossary)
-4. [The network we model](#4-the-network-we-model)
-5. [Physics: where the equations come from](#5-physics-where-the-equations-come-from)
-6. [Why the equations are hard](#6-why-the-equations-are-hard)
-7. [Method 1: nonlinear solver (EPANET)](#7-method-1-nonlinear-solver-epanet)
-8. [Method 2: linearization with SOS2](#8-method-2-linearization-with-sos2)
-9. [Two comparison modes — and why separate them](#9-two-comparison-modes--and-why-separate-them)
-10. [Code structure](#10-code-structure)
-11. [How to read the results](#11-how-to-read-the-results)
-12. [The most interesting result: negative feedback](#12-the-most-interesting-result-negative-feedback)
-13. [Common pitfalls](#13-common-pitfalls)
-14. [Exercises](#14-exercises)
-15. [Where to go next](#15-where-to-go-next)
+Least-cost on/off scheduling of a fixed-speed pump, on a small looped
+distribution network with an elevated storage tank. All hydraulic
+nonlinearities (head loss, pump head curve, pump power curve) are replaced by
+piecewise-linear interpolations built from **SOS2** sets of convex weights, so
+the whole problem is a single MILP.
 
 ---
 
-## 1. Quick start
+## 1. The network
+
+```
+    S            low-level source / intake, fixed head 10 m
+    |
+    p0 + PUMP    pump station (fixed speed, on/off)
+    |
+    A            discharge header (junction, no demand)
+   / \
+  p1   p3
+  /      \
+ B --p2-- C      demand nodes, elevation 70 / 72 m, min pressure 25 m
+           \
+            p4 + throttle valve
+              \
+               T   floating tank, bottom 101 m, level 0.5-5.0 m, 150 m2
+```
+
+The pump feeds the **whole** network — every cubic metre delivered passes
+through it. T is an ordinary floating tank: it fills while the pump runs and
+supplies B and C by gravity while it does not, so the tank level and the
+service-pressure limits are directly coupled. Drain the tank too far and C
+drops below its 25 m minimum.
+
+With A dead-ended during off hours the loop can circulate `C → A → B`, so
+**every network pipe is reversible** and needs a signed breakpoint grid. That
+is the main reason the MILP is as large as it is.
+
+## 2. Model formulation
+## 2. Model formulation
+
+Index `t = 0…23` (hourly periods, `Δt = 1 h`), `j` over pipes, `k` over
+breakpoints.
+
+### 2.1 Mass balance
+
+At each junction `n`:
+
+```
+Σ_{j into n} q[j,t]  −  Σ_{j out of n} q[j,t]  =  d[n,t]
+```
+
+Tank (open, constant cross-section `A_T`):
+
+```
+y[t+1] = y[t] + ( q_p4[t] − d_T[t] ) · Δt / A_T
+y_min ≤ y[t] ≤ y_max,      y[0] = y_init,      y[24] ≥ y_init
+```
+
+The last constraint makes the day cyclic — otherwise the optimiser simply
+drains the tank and pumps nothing.
+
+### 2.2 Energy / head relations
+
+Nodal-head formulation, which enforces loop energy balance automatically
+(`Δh_p1 + Δh_p2 = Δh_p3` follows from the three head equations, so no explicit
+loop equations are needed):
+
+```
+H[start(j),t] − H[end(j),t] = Δh[j,t]           for gravity pipes
+H[C,t] + h_pump[t] − Δh[p4,t] − H[T,t] = s[t]   for the pump link
+H[T,t] = z_bottom + y[t]
+H[A,t] = 100 m
+H[n,t] ≥ elevation[n] + p_min[n]
+```
+
+Head loss is Hazen-Williams, with `q` in m³/h:
+
+```
+Δh(q) = R · q · |q|^0.852,    R = 10.67 · L / (C^1.852 · D^4.87) · (1/3600)^1.852
+```
+
+### 2.3 SOS2 piecewise linearisation
+
+For every link `j` and period `t`, with breakpoints `Q[j,k]` and tabulated
+values `Φ[j,k] = Δh(Q[j,k])`:
+
+```
+q[j,t]  = Σ_k Q[j,k] · λ[j,t,k]
+Δh[j,t] = Σ_k Φ[j,k] · λ[j,t,k]
+Σ_k λ[j,t,k] = 1            (gravity pipes)
+λ[j,t,·] is SOS2            (at most two adjacent weights nonzero)
+```
+
+Because `Δh(q) = R q|q|^0.852` is **nonconvex** (convex for `q > 0`, concave for
+`q < 0`) and appears in an **equality**, a convex-combination model alone is not
+enough — the SOS2 adjacency condition is what forces the weights onto a single
+segment of the curve. That is the whole reason SOS2 is the right tool here.
+
+Breakpoint placement is not uniform. The second derivative of `q|q|^0.852`
+blows up at `q = 0`, so the grid is refined there:
+`Q_k = q_max · (k/n)^1.6`.
+
+### 2.4 The pump, and the on/off trick
+
+The same λ-set carries four quantities for the pump link:
+
+```
+q_p4[t]   = Σ_k Q_k λ[k]          flow
+Δh_p4[t]  = Σ_k Φ_k λ[k]          pipe friction on p4
+h_pump[t] = Σ_k h(Q_k) λ[k]       pump head,  h(q) = h0 − r q²
+P[t]      = Σ_k P(Q_k) λ[k]       shaft power, P = ρ g q h(q) / η(q)
+```
+
+with the efficiency curve `η(q) = η_bep · (2x − x²)`, `x = q/q_bep`.
+
+The on/off disjunction is expressed by changing one right-hand side:
+
+```
+Σ_k λ[p4,t,k] = z[t]        instead of  = 1
+```
+
+When `z[t] = 0` every weight is zero, so flow, pump head and power all collapse
+to zero exactly — no big-M needed for the operating point. Because the
+breakpoint grid starts at `q_min` (not at 0), the pump's minimum-flow limit is
+enforced for free whenever `z[t] = 1`.
+
+One big-M is still needed, on the pump-link *head* equation. When the pump is
+off the check valve shuts and the two sides of p4 decouple, so the equation must
+be released:
+
+```
+−M(1 − z[t]) ≤ s[t] ≤ M(1 − z[t])
+```
+
+**Note on what is and is not a decision.** The pump flow is *not* free. Given
+the demands and the tank level, the head equation
+`H_C + h(q) − Δh_p4(q) = H_T` intersects the pump curve with the system curve
+and pins `q` to a single value. The only real binary decision is `z[t]`; the
+model reports the resulting operating point (in the shipped case ~134–145 m³/h,
+drifting down as the tank fills). This is the behaviour you want from an
+on/off model, and it is why the pump curve has to be in the model at all
+rather than assuming a fixed flow rate.
+
+### 2.5 The floating tank and the throttle valve
+
+When the tank hangs off the network rather than sitting behind the pump, two
+extra pieces are needed.
+
+**Throttle / altitude valve — why it is there.** This was not in the model
+originally; it was added because without it the MILP came back *infeasible*,
+and the reason turned out to be physical rather than a coding mistake.
+
+A fixed-speed pump has exactly one head curve. The tank surface, however, is a
+state variable that moves between 101.5 m and 106 m, and network friction moves
+with demand between 52 and 178 m³/h. The operating point is wherever the pump
+curve meets the system curve — but nothing guarantees that intersection lies
+inside the pump's flow window `[q_min, q_max]` for every combination of level
+and demand. The failing case is a **high tank with low demand**: the pump at
+its minimum flow of 100 m³/h still produces about 115 m of head, which puts C
+far above the tank surface, and the head equality `H_C − H_T = Δh_p4(q_p4)`
+would demand a filling flow larger than the pump is delivering. No feasible
+point exists, and the MILP reports infeasible at a single discrete time step.
+
+Real pumping stations solve this with an altitude or control valve at the tank
+inlet, which throttles to absorb the surplus head. So the model gets one:
+
+```
+H_C − H_T = Δh_p4(q_p4) + θ[t],     0 ≤ θ[t] ≤ θ_max · fill[t]
+q_p4[t] ≤ q_max · fill[t],          q_p4[t] ≥ −q_max · (1 − fill[t])
+```
+
+`fill[t]` is a direction binary; θ may only dissipate in the filling direction,
+because allowing it while the tank drains would let the model deliver flow with
+less head than physics permits and would *understate* pressure at B and C.
+**It is also a diagnostic, and that is arguably its more useful role.** θ is
+head the station generates and then destroys, so it is wasted energy. The first
+pump fitted to this network (h₀ = 135 m, r = 4.5e-4) ran with a mean θ of
+**18.6 m** — a clear signal that it was over-sized in head. Re-fitting the curve
+against the actual system curve (static lift 91.5–96 m plus ~5 m friction at the
+duty point, so the curve should cross ~99 m at ~200 m³/h) gave h₀ = 121 m,
+r = 5.5e-4, which cut θ to **0.87 m** and saved **17% of the energy**
+(1064 → 881 kWh/day) before any scheduling optimisation at all. A steep curve
+self-regulates: the operating point moves instead of the valve opening.
+
+Watch the `throttle valve loss` line in the output. If the mean is more than a
+metre or two, fix the pump selection before reading anything into the schedule.
+
+**The shipped pump was chosen by hand, not optimised.** `pump_sizing.py` exists
+to check that hand-sizing, by sweeping the head curve and re-solving the whole
+schedule for each candidate:
+
+```
+python pump_sizing.py --mode h0     # sweep shut-off head, r fixed
+python pump_sizing.py --mode r      # sweep curve steepness, h0 fixed
+```
+
+```
+ h0 [m]  throttle   energy      cost
+    112     0.98m      898    644.86
+    118     1.92m      886    623.88
+    121     0.78m      881    593.93   <- hand-picked
+    127     1.37m      911    622.64
+    135     9.25m      990    664.04
+```
+
+The hand-picked curve happens to come out best in this sweep, but read that as
+a coarse grid confirming a back-of-envelope calculation, not as evidence of an
+optimum — the spacing is 6–8 m and nothing was searched between the points.
+
+The sweep does establish two things that matter more than the winner:
+
+* **Pump selection dominates scheduling here.** The spread across the sweep is
+  70 PLN/day (11.8%), while shifting load against the tariff with a fixed pump
+  is worth 14 PLN/day. Getting the pump right is a 5× bigger lever than getting
+  the schedule right. If you take one thing from this repository, take that.
+* **Throttle loss alone is not a sufficient criterion.** The 112 m candidate
+  runs at a lower mean throttle (0.98 m) than the 127 m one (1.37 m) yet costs
+  22 PLN/day more, because it is too weak to reach a useful duty flow and has
+  to run 16 h instead of 12. θ diagnoses over-sizing in head; it says nothing
+  about under-sizing.
+
+What this is **not**: a pump selection method. It varies two coefficients of an
+idealised parabola, on one day's demand profile, with efficiency held fixed.
+Real selection means discrete catalogue curves, NPSH margins, motor frames,
+several demand scenarios (summer/winter, fire flow, pipe ageing) and capital
+cost. The curve here is fitted to a single profile and would be over-fitted to
+it if anyone treated the result as a recommendation.
+
+**Overflow.** A `spill[t] ≥ 0` term in the tank balance keeps the model
+feasible if the tank would be driven over `y_max`. Spilling is never profitable
+(the water was pumped at a cost), so the optimiser avoids it unprompted.
+
+### 2.6 Commitment constraints
+
+```
+su[t] − sd[t] = z[t] − z[t−1]
+Σ_{τ=t−T_up+1}^{t} su[τ] ≤ z[t]
+Σ_{τ=t−T_dn+1}^{t} sd[τ] ≤ 1 − z[t]
+```
+
+### 2.7 Objective
+
+```
+min  Σ_t  c[t] · P[t] · Δt   +   c_start · Σ_t su[t]
+```
+
+with `c[t]` a three-zone tariff (night 0.35, day 0.75, evening peak 1.10).
+
+### 2.8 Valid inequalities
+
+The source is the only supply, so everything the network consumes must have
+been pumped, and `q_p0 ≤ q_max·z` gives a lower bound on run time:
+
+```
+Σ_t q_p4[t]·Δt ≥ V_required
+Σ_t z[t]       ≥ ⌈V_required / (q_max·Δt)⌉
+```
+
+A second one: with the pump off the source is disconnected, so the tank is the
+only supply and must be draining —
+
+```
+fill[t] ≤ z[t]        (whenever the network draws anything in period t)
+```
+
+Both tighten the LP relaxation and cut solve time.
+
+**Caveat, and it bit this code once.** `V_required` is only equal to the demand
+when the tank is cyclic. Under `--no-cycle` the tank may legitimately finish
+empty, so the requirement drops by `(y_init − y_min)·A_T`; omitting that term
+makes the inequality *invalid* and silently returns a worse schedule (73.18 PLN
+instead of the true 63.06 PLN on the shipped `zone` case — a 14% error with no
+warning). `verify.py` catches this class of mistake by re-solving with the cut
+deactivated and comparing.
+
+## 3. Installation
 
 ```bash
-# install uv (once)
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# run — uv fetches the dependencies itself
-uv run compare_epyt.py
+pip install pyomo
+pip install highspy          # solver, works with --sos2 binary
+# optional
+sudo apt-get install coinor-cbc     # supports native SOS2
+pip install matplotlib              # only for --plot
 ```
 
-Files needed in the same directory:
+## 4. Usage
 
+```bash
+# recommended: HiGHS with the explicit binary SOS2 encoding
+python pump_scheduling.py --solver appsi_highs --sos2 binary --bp-pipe 5
+
+# solver-level SOS2 constraints (CBC, Gurobi, CPLEX, SCIP)
+python pump_scheduling.py --solver cbc --sos2 native --time-limit 300
+
+# export
+python pump_scheduling.py --solver appsi_highs --sos2 binary \
+       --csv schedule.csv --plot schedule.png
 ```
-compare_epyt.py       ← the script
-network.inp           ← network description (EPANET format)
-```
 
-The script prints tables to the console and saves `comparison_epyt.png`.
-
-> **No uv?** `pip install pulp numpy matplotlib epyt` and `python compare_epyt.py` works too. But `uv` is more convenient — it doesn't clutter your system.
-
----
-
-## 2. The problem in three sentences
-
-A water distribution network is described by a **system of nonlinear equations** — head losses grow with flow to the power of ~1.85, not linearly.
-
-For **simulation** that's not a problem: Newton's method handles it well (that's how EPANET works).
-
-But for **optimization** (e.g. "which pipe diameters should I pick to minimize cost while keeping pressure adequate?") we need a linear model, because LP/MILP solvers can minimize an objective function and nonlinear solvers usually cannot. **This script measures how much accuracy we lose in that trade.**
-
----
-
-## 3. Glossary
-
-Read this before diving into the code — without it the rest is fog.
-
-| Term | What it means |
+| flag | meaning |
 |---|---|
-| **Node** | a point in the network: a pipe junction, a demand point, a tank |
-| **Link / pipe** | a segment connecting two nodes |
-| **Demand** | how much water consumers draw at a given node [m³/h] |
-| **Hydraulic head** $h$ | the "energy level" of the water at a node [m a.s.l.]. Water flows from higher $h$ to lower. Not the same as pressure — $p = h - \text{ground elevation}$ |
-| **Head loss** $h_L$ | how much energy the water loses to friction in a pipe [m] |
-| **Reservoir** | a source at *constant* head (a river, an intake). Unlimited water |
-| **Tank** | a storage tank at *variable* level — it fills and empties |
-| **EPS** | Extended Period Simulation — simulation over time (here 24 steps of 1 h), as opposed to a single steady-state calculation |
-| **LP** | Linear Programming — optimization with linear equations |
-| **MILP** | Mixed Integer LP — LP plus integer variables (here: 0/1) |
-| **SOS2** | Special Ordered Set of type 2 — a special constraint, explained in §8 |
+| `--solver` | `cbc`, `appsi_highs`, `gurobi`, `cplex`, `scip` |
+| `--sos2` | `native` (solver SOS2) or `binary` (interval binaries) |
+| `--bp-pipe` | breakpoints per side for gravity pipes (default 7) |
+| `--bp-pump` | breakpoints across the pump operating window (default 9) |
+| `--gap` | relative MIP gap (default 1e-4) |
+| `--time-limit` | seconds |
+| `--no-cycle` | drop the end-of-day tank level constraint |
+| `--csv`, `--plot` | write results |
+| `--tee` | show the solver log |
 
----
+### Which SOS2 encoding
 
-## 4. The network we model
+`native` produces a much smaller model (72 binaries vs 936) because branching
+happens inside the solver, but it needs a solver with real SOS2 support, and CBC
+in particular branches on SOS2 poorly here — it did not close the gap in
+300 s on the shipped case. `binary` writes the adjacency condition out
+explicitly:
 
 ```
-        A  ← reservoir, h = 100 m (constant, e.g. a water tower)
-       / \
-     p1   p3
-     /       \
-    B --p2--- C
-               |
-              p4
-               |
-               T  ← open tank, variable level
+Σ_i w[j,t,i] = 1 (or z[t]),      λ[k] ≤ w[k−1] + w[k]
 ```
 
-Water flows from A to the consumers at B and C. Tank T acts as a **buffer**: at night (low demand) it fills up, during peaks (high demand) it feeds water back into the network.
+which is bigger but works with any MILP solver and, with HiGHS, proves
+optimality in ~80 s. Use `native` if you have Gurobi or CPLEX.
 
-### Pipe parameters (from `network.inp`)
+## 5. Reference result
 
-| Pipe | From → To | Length | Diameter | C (roughness) |
+```
+hour tariff  on   q_pump  h_pump  power  tank_lv  q_tank   H_B     H_C   margin
+   0   0.35   0      0.0    0.00    0.0    3.000   -51.8  103.53  103.59   6.59
+   3   0.35   1    198.7   99.25   67.2    2.103   160.7  108.34  106.33   9.33
+   5   0.35   1    196.5   99.72   66.8    4.174   121.8  108.73  107.12  10.12
+   7   0.75   0      0.0    0.00    0.0    4.143  -166.8  101.27  101.72   4.72
+   9   0.75   0      0.0    0.00    0.0    1.958  -138.0  100.14  100.48   3.48
+  10   0.75   1    211.3   96.40   69.7    1.038    84.8  105.19  103.77   6.77
+  16   0.75   1    201.6   98.62   67.8    4.538    69.3  107.48  106.25   9.25
+  17   1.10   0      0.0    0.00    0.0    5.000  -166.8  102.13  102.58   5.58
+  20   1.10   0      0.0    0.00    0.0    1.627  -132.2  100.02  100.34   3.34
+  21   1.10   1    185.9  101.98   64.9    0.745    76.7  111.00  109.83  12.83
+  23   0.35   1    202.5   98.43   67.9    2.072   139.3  107.42  105.59   8.59
+
+pump run time            : 13.0 h  (3 start-ups)
+volume pumped into network: 2,622.0 m3   (100% of demand)
+tightest pressure margin : 3.34 m above the limit
+throttle valve loss      : max 7.22 m, mean over running hours 0.87 m
+tank level  start / end  : 3.000 m / 3.000 m
+electrical energy        : 881.48 kWh   (0.3362 kWh/m3)
+TOTAL                    : 593.68 PLN
+same energy at flat average tariff 0.690 PLN/kWh: 607.86 PLN
+```
+
+Things worth reading off this:
+
+* The pump charges the tank to 5.00 m by 17:00 and rides out most of the
+  1.10 evening block — but it **cannot skip it entirely**. By 21:00 the tank is
+  down to 0.745 m against a 0.5 m floor, so it is forced to start at peak
+  tariff. Storage, not tariff, is the binding resource: the tank holds 675 m³
+  against 747 m³ of demand in the 17:00–21:00 block.
+* At 20:00 the pressure margin falls to 3.34 m. The tank cannot be drawn any
+  lower without violating the 25 m service pressure at C — the level bound and
+  the pressure bound become active at nearly the same moment.
+* Flow reverses in p4 every cycle (+160 m³/h filling, −167 m³/h supplying),
+  which is exactly why that link needs a **signed** breakpoint grid.
+* Load shifting is worth only 14 PLN/day here (594 vs 608 at the flat average).
+  That is honest: with storage this tight there is not much to shift. Doubling
+  the tank is the intervention worth costing, and the model is the tool to
+  price it.
+
+## 6. Linearisation accuracy
+
+Every run ends with a check that recomputes exact Hazen-Williams losses from
+the optimised flows and compares them against the PWL values:
+
+```
+mean |error| over active links : 0.0157 m
+worst link                     : p3 at hour 13, PWL 2.771 m vs exact 2.713 m
+```
+
+Accuracy vs cost (HiGHS, `--sos2 binary`):
+
+| `--bp-pipe` | binaries | mean err | worst err | wall time |
 |---|---|---|---|---|
-| p1 | A → B | 500 m | 150 mm | 130 |
-| p2 | B → C | 400 m | 125 mm | 130 |
-| p3 | A → C | 600 m | 150 mm | 130 |
-| p4 | C → T | 300 m | 125 mm | 130 |
+| 4 | 600 | 0.062 m | 0.228 m | 45 s |
+| 5 | 696 | 0.031 m | 0.097 m | 75 s |
+| 7 | 936 | 0.016 m | 0.058 m | 80 s |
 
-**Coefficient C** is the Hazen-Williams roughness: the higher, the smoother the pipe. 130 ≈ cast iron, 150 ≈ PE/PVC.
+Sub-0.1 m residuals are well inside the 20 m pressure margin, so the schedule
+is safe. If your margins are tight, raise `--bp-pipe` or re-run the chosen
+`z[t]` through a proper simulator (see below).
 
-### Time-varying demand
+## 7. Verifying the code
 
-Demand is not constant — people use water on a daily rhythm:
+`verify.py` audits a solved model **without reusing any of its constraints**:
+it pulls the raw variable values out and re-derives the physics from the `Case`
+data. It checks nodal and tank mass balance, the global volume balance, the
+head balance against *exact* Hazen-Williams (not the PWL approximation), all
+bounds, minimum up/down times, and recomputes the objective from the exact pump
+curves.
 
-![Diurnal demand pattern](demand-pattern.png)
-
-**Vertical axis (multiplier)** — a dimensionless coefficient we multiply the base demand by:
-
-$$D_i(t) = D_i^{\text{base}} \cdot \mu(t)$$
-
-Node B has a base demand of 40 m³/h, so:
-- at 2:00 (μ = 0.40) → 40 × 0.40 = **16 m³/h**
-- at 8:00 (μ = 1.55) → 40 × 1.55 = **62 m³/h**
-
-Almost a fourfold difference between the night minimum and the morning peak.
-
-**Horizontal axis** — hours of the day, 0–23. These are the 24 values of the `DAILY` pattern.
-
-**Bar height** — the taller, the higher the consumption.
-
-#### Why this shape
-
-The pattern reflects the daily rhythm of a household:
-
-| Period | Hours | μ | What's happening |
-|---|---|---|---|
-| Night | 1–4 | 0.40–0.50 | people asleep, minimal use |
-| Morning peak | 7–9 | 1.45–1.55 | showers, breakfast, leaving for work |
-| Daytime | 12–15 | 0.90–1.00 | moderate, stable |
-| Evening peak | 17–19 | 1.35–1.50 | coming home, cooking, baths, laundry |
-| Late evening | 22–23 | 0.65–0.80 | consumption tapers off |
-
-It is exactly this shape that forces the tank to work: **at night the surplus fills it, during peaks the tank feeds the network** — hence the four sign changes of $Q_{p4}$ at hours 6, 11, 16 and 21.
-
-## Where those numbers live in the code
-
-They are simply a list of 24 values in `network.inp`:
-
-```ini
-[PATTERNS]
-;ID       Multipliers
- DAILY    0.55  0.45  0.40  0.40  0.50  0.75    ← hours 0-5
- DAILY    1.10  1.45  1.55  1.35  1.15  1.05    ← hours 6-11
- DAILY    1.00  0.95  0.90  0.95  1.10  1.35    ← hours 12-17
- DAILY    1.50  1.40  1.20  1.00  0.80  0.65    ← hours 18-23
+```bash
+python verify.py
+python verify.py --no-cycle
 ```
 
-EPANET reads them in order — each row is the next 6 hours; the line breaks are purely cosmetic.
+Current output:
+
+```
+=== audit ===
+    nodal mass balance     max residual 1.14e-13 m3/h
+    tank balance           max residual 2.02e-14 m
+    global volume balance  in 2622.0 = out 2622.0 + stored 0.0 + spill 0.0
+    exact head balance     max residual 0.118 m at ('p3', 21)
+    on/off runs            offx3, onx3, offx4, onx7, offx4, onx3
+    objective              model 593.68 vs recomputed from exact curves 593.53 (-0.03%)
+    all checks passed
+```
+
+Mass balances close to machine precision, so the network assembly is right.
+The head-balance residual of 0.118 m is the linearisation error and nothing
+else — it is the number to watch if you tighten pressure margins. The objective
+recomputed from the exact curves lands within 0.03% of the model's, which is
+the useful statement: **the schedule is worth what the model says it is**, even
+though the flows it was derived from are approximate.
+
+## 8. `verify.py` vs `simulate.py` — residual check vs real simulation
+
+These answer different questions and it is worth not confusing them.
+
+**`verify.py` does not solve the nonlinear system.** It substitutes the MILP's
+own `q`, `H`, `y` into the exact equations and measures the residual. It tells
+you whether the model's numbers are self-consistent — which catches sign
+errors, missing terms and wrong topology — but it cannot tell you what happens
+when you actually run the schedule.
+
+**`simulate.py` throws the MILP's flows and heads away.** It keeps only the
+*decisions* (the on/off vector `z[t]` and the throttle setpoint), then re-solves
+the nonlinear network with `fsolve` at every sub-step and integrates the tank
+level forward. Pipe flows come from inverting `Δh = R q|q|^0.852`; the pump
+flow is found by bisecting `H_up + h(q) − R q^1.852 = H_dn`, which is strictly
+decreasing in `q` and so has a unique root.
+
+```bash
+python simulate.py --substeps 1 6 12 60
+```
+
+```
+schedule z = 000111000011111110000111
+MILP says      : cost  593.68 PLN   energy 881.5 kWh   y_end 3.000 m   margin 3.34 m
+sim ( 1 step /h): cost  594.36 PLN   energy 882.5 kWh   y_end 3.012 m   margin 3.43 m
+                  overflow 5.2 m3
+sim ( 6 steps/h): cost  593.07 PLN   energy 880.2 kWh   y_end 2.965 m   margin 2.62 m
+sim (12 steps/h): cost  592.94 PLN   energy 880.0 kWh   y_end 2.957 m   margin 2.52 m
+sim (60 steps/h): cost  592.84 PLN   energy 879.8 kWh   y_end 2.951 m   margin 2.44 m
+```
+
+Running at `--substeps 1` reproduces the MILP's own assumption (tank level held
+at its start-of-hour value), so the difference between that row and the MILP is
+pure **linearisation** error. The difference between `1` and `60` is pure
+**time-discretisation** error. Separating them matters, because they do not
+affect the two outputs equally:
+
+* **Cost is reliable.** 592.84 vs 593.68 PLN, an error of 0.14%. The schedule
+  is worth what the model says it is worth.
+* **The pressure margin is not.** The model reports 3.34 m; the true value is
+  **2.44 m**, so the model is optimistic by 0.90 m — about 27% of the margin,
+  and roughly 7× the 0.118 m head-loss residual that `verify.py` reports.
+
+That last point corrects something the residual check appears to say. A 0.118 m
+residual looks negligible against a 3.34 m margin, and it is tempting to
+conclude the schedule has plenty of room. It does not: errors compound through
+the tank trajectory, because a slightly wrong flow gives a slightly wrong level,
+which shifts the head at C for every subsequent hour. **Do not size pressure
+margins from the residual — simulate.** The values converge by roughly
+12 sub-steps per hour, so 5-minute steps are enough to trust.
+
+The `--substeps 1` run also overflows 5.2 m³, which the finer runs do not: an
+artefact of the hourly step, not a real operating problem.
+
+## 9. Limitations and honest caveats
+
+* **The MILP solves linearised hydraulics, not exact hydraulics.** Use
+  `simulate.py` (§8) or EPANET before trusting a schedule operationally. The
+  right workflow is MILP for the combinatorics, simulator for verification —
+  and as §8 shows, the verification is not a formality: it moved the pressure
+  margin by 27%.
+* **Deterministic demand.** No forecast error. A rolling-horizon re-solve
+  every hour with updated forecasts and the measured tank level is the usual
+  fix, and the model is already set up for it — change `level_init_m` and the
+  tariff/demand vectors and re-solve.
+* **One pump, fixed speed.** Multiple parallel pumps need a λ-set per unit
+  plus a shared discharge head; variable speed needs a second continuous
+  dimension (affinity laws) and hence a 2-D PWL, where SOS2 no longer suffices
+  — use a triangulated model instead.
+* **Big-M on the pump-link head equation** is set to 400 m. It is loose but
+  safe for this head range; tighten it if you enlarge the network, since a
+  loose big-M weakens the relaxation.
+* **Water quality, minimum tank turnover, and leakage are not modelled.**
+  Cost-optimal schedules tend to stratify tanks; a minimum-turnover constraint
+  is usually added in practice.
+* **The throttle valve is an escape hatch as well as a physical component.**
+  If reported throttle losses are large, treat it as a sizing warning rather
+  than a result: the schedule is then paying for head it immediately destroys.
+* **The tank head equation uses the level at the *start* of each interval.**
+  For long steps this is a real approximation and is what makes the throttle
+  necessary. Using the mid-interval level `(y[t]+y[t+1])/2` is a common
+  alternative; it is smoother but couples consecutive periods more tightly.
+
+## 10. Adapting to your own data
+
+Everything lives in `default_case()`:
+
+* `Pipe(name, start, end, length_m, diameter_m, hw_c, q_max_m3h, allow_reverse)`
+  — `q_max_m3h` also sets the breakpoint span, so keep it realistic; an
+  oversized range wastes resolution.
+* `Pump(h0_m, r_curve, q_min, q_max, q_bep, eta_bep, min_up_h, min_down_h,
+  start_cost, initial_on)` — fit `h0` and `r_curve` to your manufacturer curve
+  by least squares on `h = h0 − r q²`.
+* `Tank(bottom_elev_m, area_m2, level_min_m, level_max_m, level_init_m)`.
+* `demand_m3h` — one list per node, any horizon length; `tariff` sets the
+  number of periods, so the two must match.
+* Sub-hourly resolution: set `dt_h=0.25` and supply 96-element profiles.
+
+Adding a node or pipe requires no code changes beyond the dictionaries — mass
+balance, head equations and breakpoint grids are all built from them.
 
 ---
 
-### The flow sign convention
-
-**This is critical for understanding the results.** Pipe p4 is defined as "C → T", so:
-
-- $Q_{p4} > 0$ → water flows **from the network into the tank** (filling)
-- $Q_{p4} < 0$ → water flows **from the tank into the network** (emptying)
-
-Same pipe, same sign convention in the code — only the value changes. The model **must handle both directions**, and that is the source of all the complication in §8.
-
----
-
-## 5. Physics: where the equations come from
-
-The model rests on two conservation laws. They are exact counterparts of Kirchhoff's laws from electrical engineering — if you know those, you get this for free.
-
-### 5.1. Conservation of mass (Kirchhoff's first law)
-
-*Whatever flows into a node must flow out or be drawn off.*
-
-For every demand node:
-
-$$\sum_j Q_{ij} = D_i$$
-
-Concretely, in our case:
-
-```
-Node B:  Q_p1 - Q_p2 = D_B        (p1 flows in, p2 flows out, the rest is demand)
-Node C:  Q_p2 + Q_p3 - Q_p4 = D_C
-```
-
-These equations are **linear** — just additions and subtractions. No problem.
-
-### 5.2. Conservation of energy (Kirchhoff's second law)
-
-*The difference in energy level between two nodes equals the loss in the pipe connecting them.*
-
-$$h_{\text{start}} - h_{\text{end}} = h_L(Q)$$
-
-Concretely:
-
-```
-p1:  h_A - h_B = h_L(Q_p1)
-p2:  h_B - h_C = h_L(Q_p2)
-p3:  h_A - h_C = h_L(Q_p3)
-p4:  h_C - h_T = h_L(Q_p4)
-```
-
-And here the problem begins, because the function $h_L$ is nonlinear.
-
-### 5.3. The head loss formula (Hazen-Williams)
-
-$$h_L = \frac{10.67 \cdot L}{C^{1.852} \cdot D^{4.87}} \cdot Q^{1.852}$$
-
-Everything before $Q$ is a constant that depends on the pipe geometry — we collect it into a single coefficient $R$:
-
-$$h_L = R \cdot Q^{1.852}$$
-
-**But this only works for $Q > 0$.** For reverse flow we need a two-sided version:
-
-$$\boxed{h_L(Q) = R \cdot Q \cdot |Q|^{0.852}}$$
-
-Check it yourself: for $Q = 10$ you get $+R \cdot 10^{1.852}$, for $Q = -10$ you get $-R \cdot 10^{1.852}$. The loss changes sign along with the flow — it always acts *against* the direction of the water, like friction.
-
-In code:
-
-```python
-def head_loss(self, lid, Q):
-    return self.R[lid] * Q * abs(Q) ** 0.852
-```
-
-### 5.4. The tank equation
-
-The tank is the only element with **memory** — its state depends on history:
-
-$$\frac{dh_T}{dt} = \frac{Q_{\text{in}}}{A_T}$$
-
-After discretization (Euler's method, 1 h step):
-
-$$h_T^{(t+1)} = h_T^{(t)} + \frac{Q_{\text{in}} \cdot \Delta t}{A_T}$$
-
-where $A_T = \pi D^2/4$ is the cross-sectional area of the tank (78.5 m² here).
-
-**The key trick:** within *a single time step* we treat $h_T$ as a **constant** (known from the previous step). This separates the temporal nonlinearity from the hydraulic one — we solve 24 independent static problems instead of one large dynamic one.
-
-In code:
-
-```python
-level = min(max(level + Q_in * DT / area, lo), hi)
-#                                          ↑    ↑
-#                              limits: overflow / empty
-```
-
----
-
-## 6. Why the equations are hard
-
-Let's collect the full system for a single time step:
-
-**Unknowns (6):** $Q_{p1}, Q_{p2}, Q_{p3}, Q_{p4}, h_B, h_C$
-
-**Equations (6):**
-
-```
-(1)  Q_p1 - Q_p2 - D_B = 0                          ← linear ✓
-(2)  Q_p2 + Q_p3 - Q_p4 - D_C = 0                   ← linear ✓
-(3)  h_A - h_B - R₁·Q_p1·|Q_p1|^0.852 = 0           ← NONLINEAR ✗
-(4)  h_B - h_C - R₂·Q_p2·|Q_p2|^0.852 = 0           ← NONLINEAR ✗
-(5)  h_A - h_C - R₃·Q_p3·|Q_p3|^0.852 = 0           ← NONLINEAR ✗
-(6)  h_C - h_T - R₄·Q_p4·|Q_p4|^0.852 = 0           ← NONLINEAR ✗
-```
-
-Four equations with an exponent of 1.852 is too much to solve in closed form. You have to iterate.
-
-> **A note for the curious.** You may be surprised there is no separate "sum of losses around loop A-B-C-A = 0" equation of the kind you find in textbooks. It isn't needed: since $h_B$ and $h_C$ are explicit variables, the loop condition follows automatically from subtracting equations (3)+(4)−(5). Separate loop equations are only written in the Hardy-Cross method, where the heads $h$ are eliminated from the system and only the flows remain.
-
----
-
-## 7. Method 1: nonlinear solver (EPANET)
-
-### What it does
-
-It starts from a guessed solution and **improves it iteratively** with the Newton-Raphson method:
-
-1. Take the current approximation of $Q$
-2. Linearize the loss curve **tangentially at that point** (the derivative)
-3. Solve the resulting linear system
-4. Update $Q$, go back to 1
-5. Stop when the correction is smaller than the tolerance
-
-It usually converges in a few to a dozen or so iterations. EPANET uses a variant called the *gradient method* (Todini & Pilati, 1988), optimized for sparse matrices.
-
-### How we call it from Python
-
-The **epyt** library is a thin wrapper around the original EPANET engine written in C. It reimplements nothing — it simply calls functions from the library.
-
-```python
-from epyt import epanet
-
-d = epanet('network.inp')           # load the network
-d.openHydraulicAnalysis()           # open a computation session
-d.initializeHydraulicAnalysis()
-
-for step in range(24):
-    t = d.runHydraulicAnalysis()    # compute ONE time step
-    H = d.getNodeHydraulicHead()    # read heads at all nodes
-    Q = d.getLinkFlows()            # read flows in all pipes
-    # ... store the results ...
-    if d.nextHydraulicAnalysisStep() == 0:
-        break                       # 0 = end of simulation
-
-d.closeHydraulicAnalysis()
-d.unload()                          # ALWAYS release the resources!
-```
-
-**Why step by step rather than all at once?** Because we want to *inspect* the tank state at every hour and hand it to the other model. Had we used `getComputedTimeSeries()`, we would get a finished result with no way to intervene in the middle.
-
-### Where the pipe parameters come from
-
-epyt gives access to everything in the `.inp`:
-
-```python
-L = d.getLinkLength()            # [500, 400, 600, 300]
-D = d.getLinkDiameter()          # [150, 125, 150, 125]
-C = d.getLinkRoughnessCoeff()    # [130, 130, 130, 130]
-```
-
-This matters: **the linear model has no hand-coded parameters of its own.** It reads exactly the same numbers EPANET works on. That's what makes the comparison fair — the only difference is how the nonlinearity is handled.
-
-### A note on units
-
-EPANET computes internally in m³/s, we want m³/h. The `.inp` file has `Units CMH`, so epyt already returns m³/h. But the coefficient $R$ has to be converted by hand:
-
-```python
-_HW = 3600.0 ** 1.852    # ≈ 3 857 200
-
-R = 10.67 * L / (C**1.852 * D_m**4.87) / _HW
-#                                        ↑
-#                    because Q is in m³/h, not m³/s
-```
-
-Where does $3600^{1.852}$ come from? If $Q_{\text{h}} = 3600 \cdot Q_{\text{s}}$, then $Q_{\text{s}}^{1.852} = (Q_{\text{h}}/3600)^{1.852}$ — the constant factors out.
-
----
-
-## 8. Method 2: linearization with SOS2
-
-This is the heart of the whole script. Read carefully.
-
-### 8.1. The basic idea
-
-Since the curve is nonlinear, **let's approximate it with a polyline**:
-
-![Piecewise linearization of the pipe head loss function](sos2_fig.png)
-
-We split the flow range into $K$ segments, compute the *exact* value at the breakpoints, and interpolate linearly in between. The more segments, the closer to the truth.
-
-### 8.2. The mathematical form (weighted / lambda method)
-
-Instead of a single variable $Q$ we introduce **weights** $\lambda_k$ — one per breakpoint:
-
-$$Q = \sum_k \lambda_k \cdot Q^k \qquad h_L = \sum_k \lambda_k \cdot f(Q^k)$$
-
-$$\sum_k \lambda_k = 1, \qquad \lambda_k \ge 0$$
-
-**Example.** Breakpoints: $Q^0 = 0$, $Q^1 = 25$, $Q^2 = 50$. We want $Q = 40$.
-
-Take $\lambda_1 = 0.4$, $\lambda_2 = 0.6$, the rest zero:
-- $Q = 0.4 \cdot 25 + 0.6 \cdot 50 = 10 + 30 = 40$ ✓
-- $h_L = 0.4 \cdot f(25) + 0.6 \cdot f(50)$ — linear interpolation on the segment [25, 50] ✓
-
-Note: **both sums are linear** in the $\lambda$ variables. The values $Q^k$ and $f(Q^k)$ are ordinary numbers computed up front.
-
-### 8.3. Where the catch is
-
-What if the solver picked $\lambda_0 = 0.5$, $\lambda_2 = 0.5$ (skipping the middle point)?
-
-- $Q = 0.5 \cdot 0 + 0.5 \cdot 50 = 25$
-- $h_L = 0.5 \cdot f(0) + 0.5 \cdot f(50) = 0.5 \cdot f(50)$
-
-Formally everything checks out — the weights sum to 1 and are non-negative. But this is a **chord across the entire range**, not interpolation on a segment! For a convex curve we get an overestimated loss, for a concave one an underestimated one. **The solution is physically meaningless.**
-
-We have to forbid "skipping" breakpoints somehow.
-
-### 8.4. Why the simple trick isn't enough
-
-There is a simpler method (the incremental / *delta* method) that needs no binary variables. It works when the function is **convex** — the segment slopes then increase monotonically, so the solver "naturally" fills the flatter segments first and skipping cannot occur.
-
-Let's check our function:
-
-$$\frac{d^2 h_L}{dQ^2} = 1.852 \cdot 0.852 \cdot R \cdot |Q|^{-0.148} \cdot \text{sgn}(Q)$$
-
-| Range | Second derivative | Shape |
-|---|---|---|
-| $Q > 0$ | positive | **convex** ✓ |
-| $Q < 0$ | negative | **concave** ✗ |
-
-It's an **S-shaped** function — convex on the right, concave on the left, with an inflection at zero:
-
-![The head loss function is S-shaped: convex for positive flow, concave for negative flow](scurve_fig.png)
-
-**Not globally convex → the binary-free trick will not work.** And remember from §4 that $Q_{p4}$ *must* be able to go negative, because the tank fills at times and empties at others. We can't simply assume $Q \ge 0$.
-
-### 8.5. The solution: SOS2
-
-**SOS2** (Special Ordered Set of type 2) is a constraint that says:
-
-> Among the variables $\lambda_0, \lambda_1, \ldots, \lambda_n$, **at most two adjacent ones** may be nonzero.
-
-That is exactly what forbids the situation in §8.3. It works **regardless of convexity** — we don't rely on the solver "choosing well by itself", we forbid the alternative outright.
-
-GAMS has SOS2 built in. PuLP does not expose it conveniently, so we encode it **with binaries**:
-
-```python
-# binary variables — one per SEGMENT (not per breakpoint!)
-z = [pulp.LpVariable(f"z_{name}_{m}", cat="Binary") for m in range(nseg)]
-
-prob += pulp.lpSum(lam) == 1     # weights sum to 1
-prob += pulp.lpSum(z) == 1       # exactly ONE segment active
-
-prob += lam[0] <= z[0]                       # end weight
-prob += lam[n-1] <= z[nseg-1]                # end weight
-for k in range(1, n-1):
-    prob += lam[k] <= z[k-1] + z[k]          # ← the essence of SOS2
-```
-
-**How to read this.** The last line says: weight $\lambda_k$ can be nonzero only if one of the segments **adjacent to it** is active. Since exactly one segment $m$ is active, only $\lambda_m$ and $\lambda_{m+1}$ can be nonzero — exactly two adjacent weights. Precisely what we wanted.
-
-Let's draw it out for 4 breakpoints (3 segments):
-
-```
-breakpoints:  λ₀      λ₁      λ₂      λ₃
-               │       │       │       │
-segments:      └─ z₀ ──┴─ z₁ ──┴─ z₂ ──┘
-
-If z₁ = 1 (the rest 0), the constraints give:
-  λ₀ ≤ z₀ = 0        → λ₀ = 0
-  λ₁ ≤ z₀ + z₁ = 1   → λ₁ may be > 0  ✓
-  λ₂ ≤ z₁ + z₂ = 1   → λ₂ may be > 0  ✓
-  λ₃ ≤ z₂ = 0        → λ₃ = 0
-```
-
-Only $\lambda_1, \lambda_2$ active — adjacent. Exactly as intended.
-
-### 8.6. The cost
-
-| Method | Problem type | Binary variables | Range of $Q$ |
-|---|---|---|---|
-| Incremental | LP | none | only $Q \ge 0$ |
-| **Weighted + SOS2** | **MILP** | $2K$ per pipe | **either sign** |
-| Newton-Raphson | nonlinear system | none | either sign |
-
-With $K = 8$ and 4 pipes: $4 \times 16 = 64$ binary variables per time step, × 24 steps. MILP is **hundreds of times slower** than a nonlinear solver — that's the price for being able to add an objective function.
-
----
-
-## 9. Two comparison modes — and why separate them
-
-This is the methodological core of the script. Without this separation the results would be misleading.
-
-When both models run independently for 24 hours, errors mix from two sources:
-
-1. **Approximation error** — polyline ≠ curve (this is what we want to measure)
-2. **State evolution** — the models diverge in tank level, so at hour 10 they are solving *different problems*
-
-To separate them, we run two variants.
-
-### Mode A — decoupled
-
-At every step we **take the tank level from EPANET** and feed it to the linear model as a boundary condition.
-
-```python
-for rec in hist_ep:
-    demands = {j: rec[f"D_{j}"] for j in net.junctions}
-    tank_heads = {tk: rec[f"h_{tk}"] for tk in net.tanks}   # ← from EPANET!
-    res = solve_lin(net, demands, tank_heads, K=K)
-```
-
-Both models solve an **identical problem** at every step. The difference in results is the **pure linearization error**.
-
-### Mode B — coupled
-
-The linear model drives **its own tank** across the full day:
-
-```python
-level = hist_ep[0][f"level_{tank}"]        # only the start is shared
-
-for rec in hist_ep:
-    tank_heads = {tank: net.tank_elev[tank] + level}   # ← its own state
-    res = solve_lin(net, demands, tank_heads, K=K)
-    Q_in = ...                                          # net inflow
-    level = min(max(level + Q_in * DT / area, lo), hi)  # evolution
-```
-
-This is the realistic scenario: this is how the model would work in practice, if you didn't have EPANET at hand.
-
-### Why both
-
-| | Mode A | Mode B |
-|---|---|---|
-| Tank level | imposed by EPANET | its own, free-running |
-| What it measures | the approximation alone | approximation + dynamics |
-| Realism | artificial | realistic |
-| What it's for | judging linearization quality | judging model usefulness |
-
-The result will be surprising — see §12.
-
----
-
-## 10. Code structure
-
-```
-compare_epyt.py
-│
-├── class NetFromInp                 ── reads the network from .inp via epyt
-│   ├── __init__()                      extracts topology, L, D, C, tank parameters
-│   ├── head_loss(lid, Q)               exact loss: R·Q·|Q|^0.852
-│   └── report()                        pretty-prints the parameters
-│
-├── _sos2(prob, ...)                 ── builds the linearization of ONE pipe
-│                                       returns (Q_expression, hL_expression)
-│
-├── solve_lin(net, demands, tanks)   ── assembles and solves the MILP for ONE step
-│   ├── loop over pipes                 → calls _sos2 for each
-│   ├── loop over nodes                 → mass balances
-│   └── loop over pipes                 → energy balances
-│
-├── run_epanet_stepwise()            ── EPANET step by step, collects the full state
-│
-├── run_lin_decoupled(net, hist)     ── MODE A
-├── run_lin_coupled(net, hist)       ── MODE B
-│
-├── stats(ref, test, keys)           ── MAE / MAX / RMSE
-├── plots(...)                       ── 4-panel figure
-└── main()                           ── orchestration + printouts
-```
-
-### The most important part: `solve_lin`
-
-```python
-def solve_lin(net, demands, tank_heads, K=8, Qmax=150.0):
-    prob = pulp.LpProblem("lin", pulp.LpMinimize)
-
-    # 1. For each pipe: Q and hL variables with SOS2 linearization
-    Q, hL = {}, {}
-    for lid in net.link_names:
-        Q[lid], hL[lid] = _sos2(prob, lid, net, lid, Qmax, K)
-
-    # 2. Heads at demand nodes — these are the unknowns
-    h = {j: pulp.LpVariable(f"h_{j}", lowBound=-1e3, upBound=1e3)
-         for j in net.junctions}
-
-    # 3. Helper: the head of a node
-    def head_of(node):
-        if node in h:              return h[node]            # unknown
-        if node in net.res_head:   return net.res_head[node]  # reservoir: constant
-        return tank_heads[node]                               # tank: constant this step
-
-    # 4. Mass balances — generated from the topology, not written by hand!
-    for j in net.junctions:
-        expr = []
-        for lid in net.link_names:
-            a, b = net.link_nodes[lid]
-            if   a == j: expr.append(-Q[lid])   # pipe leaves the node
-            elif b == j: expr.append( Q[lid])   # pipe enters the node
-        prob += pulp.lpSum(expr) == demands[j]
-
-    # 5. Energy balances
-    for lid in net.link_names:
-        a, b = net.link_nodes[lid]
-        prob += head_of(a) - head_of(b) == hL[lid]
-
-    # 6. No objective function — we solve a system, we don't optimize
-    prob += 0
-
-    prob.solve(pulp.PULP_CBC_CMD(msg=False))
-```
-
-**Note points 4 and 5.** The equations are not written by hand — we generate them in a loop from the network topology. Add a pipe to the `.inp` and the code works unchanged. This is exactly how EPANET works internally (it builds an incidence matrix).
-
-**Point 6 may look odd.** Why use an optimization solver with no objective function? Because we are not optimizing — we are solving a system of equations. LP/MILP serves here as a tool for finding *any* feasible solution, and the SOS2 constraints guarantee it will be a sensible one. If you wanted real optimization, this is where you would put e.g. `pulp.lpSum(cost[p] * ... for p in ...)`.
-
----
-
-## 11. How to read the results
-
-### The 24-hour table
-
-```
-hour |   Q_p4 NL    Q_p4 A    Q_p4 B |   h_C NL    h_C A    h_C B |  lvl NL   lvl B   drift
-   0 |    38.034    37.524    37.524 |   97.134   97.111   97.111 |  5.0000  5.0000 +0.0000
-   5 |    14.711    12.358    12.812 |   97.574   97.586   97.560 |  7.2069  7.1674 -0.0395
-   6 |    -9.421    -9.511    -8.780 |   97.233   97.103   97.061 |  7.3942  7.3306 -0.0637
-               ↑
-       sign change — the tank stopped filling and started feeding the network
-```
-
-Columns: `NL` = EPANET (the truth), `A` = decoupled mode, `B` = coupled mode.
-
-**What to watch:**
-- The sign of `Q_p4` — when the tank switches from filling to emptying
-- `drift` — how far the level in mode B departs from the truth (it builds up over time)
-
-### The error table
-
-```
-  quantity |    A: MAE    A: MAX |    B: MAE    B: MAX |    B/A
-      Q_p4 |   1.05431   2.73452 |   0.75037   1.89849 |   0.7x  [m3/h]
-```
-
-- **MAE** (Mean Absolute Error) — the average absolute error, the "typical" miss
-- **MAX** — the worst case over the whole day
-- **B/A** — the ratio; a value below 1 means the coupled mode came out *better*
-
-### The figure (`comparison_epyt.png`)
-
-![Comparison of the nonlinear and linearized models: flow, tank level, head and error decomposition](comparison_epyt.png)
-
-| Panel | What it shows | What to look for |
-|---|---|---|
-| 1 | flow $Q_{p4}$ | zero crossings — the same in all models? |
-| 2 | tank level | does curve B depart from NL, and in which direction |
-| 3 | head $h_C$ | is the pressure error noticeable |
-| 4 | error on a log scale | decomposition: how much from linearization, how much from dynamics |
-
----
-
-## 12. The most interesting result: negative feedback
-
-Run the script and look at this table:
-
-```
-  Mean flow error, mode A (linearization only)  : 0.83697 m3/h
-  Mean flow error, mode B (free-running tank)   : 0.60648 m3/h
-
-  NOTE: mode B has a SMALLER error than mode A by 27.5 %
-```
-
-**The coupled mode — with error accumulating over 24 hours — comes out *better* than the decoupled one.**
-
-Intuition says the opposite: the error should build up, not disappear. But this is not a mistake.
-
-### The mechanism
-
-The key is that the linearization error has a **constant sign**. The chord of a segment always lies *above* the convex curve, so:
-
-**Step 1.** The linear model overestimates head loss → for a given head difference it computes a *smaller* flow than the true one.
-
-**Step 2.** Less water enters the tank than it should → the level $h_T$ drifts downwards.
-
-**Step 3.** But the flow into the tank depends on the difference $h_C - h_T$! A lower $h_T$ means a **larger head difference**.
-
-**Step 4.** A larger head difference → a larger flow → **it partially restores what the linearization suppressed**.
-
-```
-   linearization                          tank
-   suppresses Q  ─────────────────────→  less water
-       ↑                                       │
-       │                                       ↓
-       │                                   lower h_T
-       │                                       │
-       │                                       ↓
-       └──── larger Q ←──── larger difference h_C − h_T
-
-                  negative feedback
-```
-
-The system **partially corrects its own bias**. That is why the level drift after a full day is only −0.106 m, even though the instantaneous flow error reaches 2.7 m³/h.
-
-### Why this only works here
-
-The feedback compensates a **constant-sign bias**. If the error were random (up one moment, down the next), there would be nothing to compensate — the feedback loop would be reacting to noise. The fact that the piecewise approximation errs *systematically in one direction* is, paradoxically, an advantage here.
-
-### The methodological conclusion
-
-**Judging linearization quality in coupled mode alone flatters it.** The feedback masks part of the approximation error. If you want an honest measure of what the simplification costs — measure in decoupled mode.
-
-That is a more general lesson than water networks: **a system with feedback can hide a model error until it leaves the range in which the feedback works.**
-
----
-
-## 13. Common pitfalls
-
-### `d.unload()` — always!
-
-epyt keeps the C library and temporary files open. No `unload()` → leaks and errors on the next run.
-
-```python
-d = epanet('network.inp')
-try:
-    # ... work ...
-finally:
-    d.unload()
-```
-
-### 1-based indices
-
-The EPANET Toolkit numbers from 1 (a legacy of Fortran/C), Python from 0:
-
-```python
-n1n2 = d.getLinkNodesIndex()      # e.g. [[3, 1], ...]
-a, b = n1n2[i]
-node_a = self.node_names[a - 1]   # ← minus one!
-```
-
-Forget the `-1` and you get the wrong node without the code blowing up. A silent bug, the worst kind.
-
-### Units
-
-| Where | Unit |
-|---|---|
-| `.inp` with `Units CMH` | m³/h |
-| epyt `getLinkFlows()` | m³/h (following the `.inp`) |
-| WNTR `results.link['flowrate']` | **always m³/s** — needs ×3600 |
-| the textbook form of the H-W formula | m³/s, D in metres |
-
-A unit mismatch is the most common source of results that "look almost right".
-
-### `Qmax` too small
-
-The linearization breakpoints span $[-Q_{max}, +Q_{max}]$. If the true flow falls outside that range → **the model becomes infeasible**, because no combination of weights can produce that value.
-
-Symptom: `pulp.LpStatus[prob.status] == 'Infeasible'`. Cure: increase `Q_MAX`.
-
-### Don't confuse `pressure` with `head`
-
-```python
-d.getNodeHydraulicHead()   # hydraulic head [m a.s.l.]
-d.getNodePressure()        # pressure [m of water column] = head − elevation
-```
-
-For a **tank**, `pressure` is the water depth and `head` is the water surface elevation. For a demand node, `pressure` is what the consumer feels at the tap.
-
-### MILP is slow — don't panic
-
-24 steps × ~0.6 s = ~15 s. That's normal. If you want it faster while experimenting, reduce `K_SEG` to 4 (at the cost of accuracy).
-
----
-
-## 14. Exercises
-
-Ordered from easiest. Each one requires understanding a different part of the code.
-
-### ⭐ 1. The effect of the segment count
-
-Change `K_SEG` to 4, then to 16. Record the MAE errors.
-
-*Question:* By how much did the error drop when K doubled? Does it match the theoretical $O(1/K^2)$?
-
-### ⭐ 2. A bigger tank
-
-In `network.inp`, change the tank diameter from 10 to 20 m.
-
-*Question:* Why did the level drift shrink even though the flow error didn't change? (Hint: $A_T$ in the denominator of the Euler equation.)
-
-### ⭐ 3. A sharper peak
-
-Raise the peak multipliers in `[PATTERNS]` to 2.0.
-
-*Question:* Does the tank hit a limit (`EMPTY`/`FULL`)? What happens to the mass balance then — is it still satisfied?
-
-### ⭐⭐ 4. Turn SOS2 off
-
-Comment out the SOS2 constraints in `_sos2` (the lines with `lam[k] <= z[k-1] + z[k]`).
-
-*Question:* Did the results break? Check whether the solver picked non-adjacent weights — print the `lam` values for pipe p4 at an hour when $Q_{p4} < 0$.
-
-*Note:* it may happen that the results look correct despite the missing SOS2 — the solver doesn't *have to* pick a bad combination, it simply *may*. That is why such bugs are insidious.
-
-### ⭐⭐ 5. A non-uniform grid
-
-Instead of equal spacing, cluster the breakpoints near zero (where the curvature is greatest):
-
-```python
-bp = [Qmax * (m/K) * abs(m/K) for m in range(-K, K+1)]   # quadratic
-```
-
-*Question:* Did the error drop for the same K? Why is it near zero that clustering pays off?
-
-### ⭐⭐⭐ 6. Add a pipe
-
-Add a pipe p5 to the `.inp` connecting B with T. The code should need no changes at all — check that it really doesn't.
-
-*Question:* How many independent loops are there now ($L - N + 1$)? How did the tank's operation change?
-
-### ⭐⭐⭐ 7. Real optimization
-
-This goes beyond the script — but it is the goal the whole linearization exists for.
-
-Replace `prob += 0` with cost minimization and add pressure constraints:
-
-```python
-cost = {"p1": 120, "p2": 95, "p3": 110, "p4": 80}   # per metre
-prob += pulp.lpSum(cost[l] * net.geom[l][0] for l in net.link_names)
-prob += h["B"] >= 20 + net.elev["B"]    # min. 20 m of water column at the consumer
-prob += h["C"] >= 20 + net.elev["C"]
-```
-
-*Question:* For this to make sense, the diameters have to become **decision variables**, not constants. How would you model that? (Hint: a binary variable "I choose diameter $d$ for pipe $p$" plus a constraint "exactly one diameter per pipe".)
-
----
-
-## 15. Where to go next
-
-### Limitations of this model
-
-| Simplification | Consequence | How to fix |
-|---|---|---|
-| no pumps | can't model a zoned network | add a pump curve $H_p = A - BQ^C$ |
-| no control valves | no PRV/PSV/FCV | additional boundary conditions |
-| demand independent of pressure (DDA) | unrealistic results under pressure deficit | a PDA model (EPANET 2.2 supports it) |
-| explicit Euler for the tank | small integration error | Runge-Kutta or a shorter step |
-| no water quality | — | a separate EPANET module |
-
-### When to use what
-
-| Task | Tool |
-|---|---|
-| simulating an existing network | **EPANET / epyt / WNTR** — accurate and fast |
-| failure analysis, scenarios | **WNTR** — it has a ready API for this |
-| your own numerical experiments | a nonlinear solver (`scipy.optimize`) with an incidence matrix |
-| **design optimization** | **MILP with SOS2** — the only one of these where you can add an objective function |
-| networks >100 pipes + optimization | heuristic algorithms (GA, PSO) or decomposition |
-
-### References
-
-- **Rossman, L.A.** (2000). *EPANET 2 Users Manual*, US EPA — the basic handbook, freely available
-- **Todini, E., Pilati, S.** (1988). *A gradient algorithm for the analysis of pipe networks* — the method EPANET uses
-- **Alperovits, E., Shamir, U.** (1977). *Design of optimal water distribution systems*, Water Resources Research — the first application of piecewise linearization to network optimization
-- **Beale, E.M.L., Tomlin, J.A.** (1970) — the original formulation of special ordered sets
-- **Williams, H.P.** *Model Building in Mathematical Programming* — the best textbook on MILP modelling; see the chapter on piecewise functions
-
-### Links
-
-- EPANET (source code): https://github.com/USEPA/EPANET2.2
-- epyt (documentation): https://github.com/OpenWaterAnalytics/EPyT
-- WNTR: https://github.com/USEPA/WNTR
-- PuLP: https://coin-or.github.io/pulp/
-
----
-
-## Cheat sheet
-
-```
-Kirchhoff I (mass):       Σ Q_in = Σ Q_out + demand
-Kirchhoff II (energy):    h_start − h_end = h_L(Q)
-
-Head loss (Hazen-Williams):  h_L = R · Q · |Q|^0.852
-Resistance coefficient:      R = 10.67·L / (C^1.852 · D^4.87) / 3600^1.852
-
-Tank:                        h_T(t+1) = h_T(t) + Q_in·Δt / A_T
-
-Linearization (lambda):      Q = Σ λ_k·Q^k,  h_L = Σ λ_k·f(Q^k),  Σ λ_k = 1
-SOS2 condition:              at most 2 ADJACENT λ_k nonzero
-Binary encoding:             λ_k ≤ z_{k−1} + z_k,   Σ z_m = 1
-
-Sign of flow in p4:          Q > 0 → filling,  Q < 0 → emptying
-```
+MIT licence. Example code, not production software.
