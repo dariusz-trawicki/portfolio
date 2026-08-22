@@ -327,6 +327,8 @@ optimality in ~80 s. Use `native` if you have Gurobi or CPLEX.
 
 ## 5. Reference result
 
+![Results](schedule.png)
+
 ```
 hour tariff  on   q_pump  h_pump  power  tank_lv  q_tank   H_B     H_C   margin
    0   0.35   0      0.0    0.00    0.0    3.000   -51.8  103.53  103.59   6.59
