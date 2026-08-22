@@ -2,8 +2,6 @@
 
 **What the script does:** it solves the same water distribution network with two methods and shows how much the mathematical simplification costs — the simplification we need in order to *optimize* the network later.
 
-**Reading time:** ~25 minutes. **Run time:** ~30 seconds.
-
 ---
 
 ## Table of contents
