@@ -34,6 +34,8 @@ across AWS and GCP.
 | [aws-tf-eks-java-app](kubernetes/aws-tf-eks-java-app/) | Multi-tier Java application on EKS — app, database, RabbitMQ and Memcached, with persistent storage and ingress | EKS, Terraform, Kubernetes, Docker |
 | [spark-on-minikube](kubernetes/spark-on-minikube/) | Spark master and workers running as Kubernetes-native workloads | Spark, Kubernetes, Minikube |
 | [gcp-tf-gke-wordpress](kubernetes/gcp-tf-gke-wordpress/) | Stateful application on GKE with managed HTTPS, provisioned as code | GKE, Terraform, GCP |
+| [secrets-on-eks-tf](kubernetes/secrets-on-eks-tf/) | Secrets on EKS: Secrets Manager → External Secrets Operator → Pod | EKS, Terraform, AWS |
+
 
 ### GitOps & CI/CD
 
