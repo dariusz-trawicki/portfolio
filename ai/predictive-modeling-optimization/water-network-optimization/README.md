@@ -101,6 +101,10 @@ Breakpoint placement is not uniform. The second derivative of `q|q|^0.852`
 blows up at `q = 0`, so the grid is refined there:
 `Q_k = q_max · (k/n)^1.6`.
 
+#### Demo
+
+- [Piecewise linearization demo](piecewise-linearisation-demo/)
+
 ### 2.4 The pump, and the on/off trick
 
 The same λ-set carries four quantities for the pump link:
