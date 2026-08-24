@@ -1,46 +1,80 @@
-# DevOps
+# Portfolio
 
-Infrastructure as Code, container orchestration, GitOps, and automated delivery
-across AWS and GCP.
+## Structure
 
-**Certification:** HashiCorp Terraform Associate (003), 2025
+- **[ai](ai/)**
+  - [llm-rag](ai/llm-rag/) — retrieval-augmented generation, semantic search, agentic retrieval
+  - [llm-agents](ai/llm-agents/) — function calling, tool use, voice agents
+  - [llm-deployment](ai/llm-deployment/) — serving LLMs: managed, serverless, self-hosted
+  - [fine-tuning](ai/fine-tuning/) — adapting open models to domain tasks
+  - [llm-tooling](ai/llm-tooling/) — applied LLM utilities and skill-chain workflows
+  - [computer-vision](ai/computer-vision/) — classification, tracking, pose estimation, OCR
+  - [gen-ai](ai/gen-ai/) — generative image models
+  - [predictive-modeling-optimization](ai/predictive-modeling-optimization/) — classical ML and mathematical optimization
+- **[mlops](mlops/)** — experiment tracking, CI/CD for ML, drift monitoring, end-to-end pipelines
+- **[data-engineering](data-engineering/)** — Kafka, Airflow, Spark, IoT streaming, ETL
+- **[devops](devops/)** — Terraform, Terragrunt, Ansible, Kubernetes, GitOps, CI/CD
 
-## Categories
+## Featured
 
-| Category | Focus |
-|---|---|
-| [iac](iac/) | Terraform, Terragrunt, Ansible — provisioning and configuration management |
-| [kubernetes](kubernetes/) | Cluster deployments on EKS, GKE and Minikube |
-| [gitops](gitops/) | Declarative delivery driven by Git as the source of truth |
-| [ci-cd](ci-cd/) | Pipelines with GitHub Actions and Jenkins |
-
-## Highlights
-
-### Infrastructure as Code
-
-| Project | Description | Stack |
+| Project | What it does | Stack |
 |---|---|---|
-| [aws-eks](iac/terraform/aws-eks/) | Managed Kubernetes cluster provisioned end to end | Terraform, AWS EKS |
-| [aws-vpc-lb-github-actions](iac/terraform/aws-vpc-lb-github-actions/) | Network topology and load balancing, applied through CI with remote state | Terraform, AWS VPC, GitHub Actions, S3 |
-| [aws-ec2-serve-llm-bielik](../ai/llm-deployment/aws-ec2-serve-llm-bielik/) | GPU instance provisioned and configured to serve a Polish LLM — *full project in ai/llm-deployment* | Terraform, EC2, Docker |
-| [gcp-cloud-run](iac/terraform/gcp-cloud-run/) | Serverless containers behind a load balancer on Google Cloud | Terraform, Cloud Run, GCP |
-| [terragrunt/01-managing-remote-state](iac/terragrunt/01-managing-remote-state/) | Remote state management and DRY configuration across environments | Terragrunt, Terraform, S3 |
-| [ansible/01-terraform-plus-ansible-demo](iac/ansible/01-terraform-plus-ansible-demo/) | Terraform provisions the infrastructure, Ansible configures the hosts — the standard IaC split between provisioning and configuration management | Terraform, Ansible, AWS |
+| [water-network-optimization](ai/predictive-modeling-optimization/water-network-optimization/) | Hydraulic network optimization compared two ways: nonlinear solver vs [piecewise linearization with SOS2 constraints](ai/predictive-modeling-optimization/water-network-optimization/piecewise-linearisation/)| EPANET, Pyomo/MILP, Python |
+| [gitops-gke-machines-efficiency](mlops/gitops-gke-machines-efficiency/) | ML model delivered to GKE declaratively — code, manifests and infrastructure in separate repos, synced by ArgoCD | ArgoCD, GKE, Terraform, GitHub Actions |
+| [with-llm-bielik-on-ec2](ai/llm-rag/with-llm-bielik-on-ec2/) | RAG over a self-hosted Polish LLM, with its own embedding service and vector store | Bielik, EC2, Docker, Terraform |
+| [k8s-mlflow-data-drift-grafana](mlops/k8s-mlflow-data-drift-grafana/) | Model serving on Kubernetes with data drift detection and dashboards | Kubernetes, MLflow, Prometheus, Grafana |
+| [bearing-fault-detection](mlops/bearing-fault-detection/) | Predictive maintenance end to end: streaming sensor data, feature extraction, model registry, serving API | Kafka, MLflow, Airflow, Postgres, Docker |
+| [sign-language-recognition](ai/computer-vision/sign-language-recognition/) | Real-time gesture recognition from video, translating hand signs into text | OpenCV, MediaPipe, TensorFlow |
+| [pllum-kaggle-pl](ai/fine-tuning/pllum-kaggle-pl/) | Fine-tuning an 8B Polish model for a domain-specific task | PyTorch, HuggingFace, PEFT |
+| [iot-kafka-spark-promet-grafana](data-engineering/iot-kafka-spark-promet-grafana/) | Real-time IoT telemetry in three progressive architectures, from DB sink to stream processing | Kafka, Spark, MySQL, Prometheus, Grafana |
+| [claude-code-core-skill-chain-workflow](ai/llm-tooling/claude-code-core-skill-chain-workflow/) | Agent workflow composed from chained skills — research, plan, implement, review as repeatable commands | Claude Code, MCP |
 
-### Kubernetes
 
-| Project | Description | Stack |
-|---|---|---|
-| [aws-tf-eks-java-app](kubernetes/aws-tf-eks-java-app/) | Multi-tier Java application on EKS — app, database, RabbitMQ and Memcached, with persistent storage and ingress | EKS, Terraform, Kubernetes, Docker |
-| [spark-on-minikube](kubernetes/spark-on-minikube/) | Spark master and workers running as Kubernetes-native workloads | Spark, Kubernetes, Minikube |
-| [gcp-tf-gke-wordpress](kubernetes/gcp-tf-gke-wordpress/) | Stateful application on GKE with managed HTTPS, provisioned as code | GKE, Terraform, GCP |
+## Tech
 
-### GitOps & CI/CD
+- **ML / AI** — PyTorch, TensorFlow, scikit-learn, HuggingFace, LangChain, LangGraph, PydanticAI, Ollama, OpenCV
+- **LLM** — RAG, semantic search, embeddings, fine-tuning (LoRA/PEFT), function calling, prompt engineering
+- **Cloud** — AWS (Bedrock, SageMaker, EC2, Lambda, EKS, ECS, S3), GCP (Vertex AI, GKE, Cloud Run), Azure OpenAI
+- **MLOps / DevOps** — MLflow, Airflow, Docker, Kubernetes, Terraform, Terragrunt, ArgoCD, Jenkins, GitHub Actions, Prometheus, Grafana
+- **Data** — Kafka, Spark, PostgreSQL, MySQL, Elasticsearch
 
-| Project | Description | Stack |
-|---|---|---|
-| [argocd-canary](gitops/argocd-canary/) | Progressive delivery with canary rollouts and automated analysis, including a deliberately broken release to show rollback | ArgoCD, Argo Rollouts, Kubernetes |
-| [ml-machines-efficiency](gitops/ml-machines-efficiency/) | ML model delivered to GKE declaratively — full project in [mlops](../mlops/gitops-gke-machines-efficiency/) | ArgoCD, GKE, Terraform |
-| [github-actions](ci-cd/github-actions/) | Reusable workflows deploying to EKS/ECR and to EC2 with Terraform | GitHub Actions, Docker, Terraform |
-| [jenkins/tf-eks-github](ci-cd/jenkins/tf-eks-github/) | Jenkins server provisioned as code, building and deploying to EKS with S3-backed state | Jenkins, Terraform, EKS |
-| [jenkins/tf-ec2-with-docker-ci](ci-cd/jenkins/tf-ec2-with-docker-ci/) | Jenkins on EC2 with Docker-based CI, bootstrapped via user data | Jenkins, Terraform, EC2, Docker |
+
+## Certifications & Training
+
+**Certifications**
+- HashiCorp Certified: Terraform Associate (003) — [2025]
+
+**Selected courses (udemy.com etc.)**
+- **Cloud & IaC** — Terraform (intro + GCP) · AWS Certified Cloud Practitioner · Google Cloud systems administration
+- **MLOps** — Complete MLOps Bootcamp (10+ end-to-end ML projects) · MLOps on GCP: CI/CD, Kubernetes, Jenkins
+- **DevOps** — Kubernetes from scratch · GitOps & real-time DevOps projects · Decoding DevOps: from basics to advanced
+- **Data & tooling** — Apache Airflow: The Hands-On Guide · Docker · Git
+
+<details>
+<summary>Earlier background — web development (PHP / Symfony / Laravel)</summary>
+
+**PHP frameworks**
+- Symfony — Zbuduj aplikację mikroblog od podstaw
+- Symfony & PHP Mastery: Build a Social Web App
+- Zbuduj pierwszą aplikację w Symfony 6
+- Laravel & PHP Mastery: Build 5 Real-World Projects
+- Laravel Framework — wielkie kompendium programisty PHP
+- Kurs Laravel — tworzenie aplikacji
+
+**Frontend & CMS**
+- Kurs HTML5 zaawansowany
+- Kurs Tailwind CSS
+- Kurs Bootstrap 3 / Bootstrap 4
+- Kurs Foundation
+- Tworzenie profesjonalnych stron z WordPress
+- Tworzenie profesjonalnych sklepów z WooCommerce
+
+**Other**
+- Jira od podstaw: zarządzanie projektami Agile
+
+<sub>Sources: udemy.com, strefakursow.pl</sub>
+</details>
+
+## Contact
+
+[LinkedIn](https://www.linkedin.com/in/dariusz-trawicki-7809582b0/) · dariusz.trawicki@dartit.pl
