@@ -3,7 +3,7 @@
 Least-cost on/off scheduling of a fixed-speed pump, on a small looped
 distribution network with an elevated storage tank. All hydraulic
 nonlinearities (head loss, pump head curve, pump power curve) are replaced by
-piecewise-linear interpolations built from **SOS2** sets of convex weights, so
+[piecewise-linear interpolations](piecewise-linearisation-demo) built from **SOS2** sets of convex weights, so
 the whole problem is a single MILP.
 
 ---
