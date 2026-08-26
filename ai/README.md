@@ -42,7 +42,6 @@ from experiments to models running in the cloud.
 | Project | Description | Stack |
 |---|---|---|
 | [llm-deployment/pllum-on-aws-ec2](llm-deployment/pllum-on-aws-ec2/) | Self-hosted Polish LLM on GPU instances, provisioned as code | HuggingFace, EC2, Terraform |
-| [llm-deployment/aws-lambda-bedrock-tf](llm-deployment/aws-lambda-bedrock-tf/) | Serverless GenAI endpoint, pay-per-request | Bedrock, Lambda, Terraform |
 | [llm-deployment/azure-openai](llm-deployment/azure-openai/) | LLM integration on Azure, with and without IaC | Azure OpenAI, Terraform |
 | [fine-tuning/pllum-kaggle-pl](fine-tuning/pllum-kaggle-pl/) | Fine-tuning a Polish open model for a domain task | PyTorch, HuggingFace, PEFT |
 | [fine-tuning/news-class](fine-tuning/news-class/) | Fine-tuned classifier for news categorization | Transformers, PyTorch |
