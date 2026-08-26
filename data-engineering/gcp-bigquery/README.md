@@ -1,6 +1,6 @@
-# Terraform BigQuery CSV Loader
+# BigQuery CSV Loader
 
-A minimal Terraform demo that creates a BigQuery dataset, table, and loads data from a local CSV file via GCS.
+A demo that creates a BigQuery dataset, table, and loads data from a local CSV file via GCS.
 
 ## Architecture
 
