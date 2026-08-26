@@ -1,6 +1,6 @@
-# Nonlinear vs linearized (piecewise linearization) water distribution network model
+# Nonlinear vs linearized ([piecewise linearization](#8-method-2-linearization-with-sos2)) water distribution network model
 
-**What the script does:** it solves the same water distribution network with two methods and shows how much the mathematical simplification (piecewise linearization) costs — the simplification we need in order to *optimize* the network later.
+**What the script does:** it solves the same water distribution network with two methods and shows how much the mathematical simplification ([piecewise linearization](#8-method-2-linearization-with-sos2)) costs — the simplification we need in order to *optimize* the network later.
 
 ---
 
