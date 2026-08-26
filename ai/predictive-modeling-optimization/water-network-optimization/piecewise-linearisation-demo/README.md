@@ -1,6 +1,6 @@
-# Nonlinear vs linearized water distribution network model
+# Nonlinear vs linearized (piecewise linearization) water distribution network model
 
-**What the script does:** it solves the same water distribution network with two methods and shows how much the mathematical simplification costs — the simplification we need in order to *optimize* the network later.
+**What the script does:** it solves the same water distribution network with two methods and shows how much the mathematical simplification (piecewise linearization) costs — the simplification we need in order to *optimize* the network later.
 
 ---
 
@@ -13,7 +13,7 @@
 5. [Physics: where the equations come from](#5-physics-where-the-equations-come-from)
 6. [Why the equations are hard](#6-why-the-equations-are-hard)
 7. [Method 1: nonlinear solver (EPANET)](#7-method-1-nonlinear-solver-epanet)
-8. [Method 2: linearization with SOS2](#8-method-2-linearization-with-sos2)
+8. [Method 2: Piecewise linearization with SOS2](#8-method-2-linearization-with-sos2)
 9. [Two comparison modes — and why separate them](#9-two-comparison-modes--and-why-separate-them)
 10. [Code structure](#10-code-structure)
 11. [How to read the results](#11-how-to-read-the-results)
@@ -832,23 +832,3 @@ prob += h["C"] >= 20 + net.elev["C"]
 - epyt (documentation): https://github.com/OpenWaterAnalytics/EPyT
 - WNTR: https://github.com/USEPA/WNTR
 - PuLP: https://coin-or.github.io/pulp/
-
----
-
-## Cheat sheet
-
-```
-Kirchhoff I (mass):       Σ Q_in = Σ Q_out + demand
-Kirchhoff II (energy):    h_start − h_end = h_L(Q)
-
-Head loss (Hazen-Williams):  h_L = R · Q · |Q|^0.852
-Resistance coefficient:      R = 10.67·L / (C^1.852 · D^4.87) / 3600^1.852
-
-Tank:                        h_T(t+1) = h_T(t) + Q_in·Δt / A_T
-
-Linearization (lambda):      Q = Σ λ_k·Q^k,  h_L = Σ λ_k·f(Q^k),  Σ λ_k = 1
-SOS2 condition:              at most 2 ADJACENT λ_k nonzero
-Binary encoding:             λ_k ≤ z_{k−1} + z_k,   Σ z_m = 1
-
-Sign of flow in p4:          Q > 0 → filling,  Q < 0 → emptying
-```
