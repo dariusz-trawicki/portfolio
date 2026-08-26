@@ -1,0 +1,30 @@
+1. Get the application URL:
+
+{{- if and .Values.ingress.enabled .Values.ingress.host }}
+  {{- $proto := "http" -}}
+  {{- if and .Values.ingress.tls (gt (len .Values.ingress.tls) 0) }}{{- $proto = "https" -}}{{- end }}
+  echo "{{ $proto }}://{{ .Values.ingress.host }}/"
+
+  # If you are using Minikube:
+  #   minikube addons enable ingress
+  #   kubectl -n ingress-nginx patch svc ingress-nginx-controller -p '{"spec":{"type":"LoadBalancer"}}'
+  #   minikube tunnel
+  #   echo "127.0.0.1 {{ .Values.ingress.host }}" | sudo tee -a /etc/hosts
+{{- else if eq .Values.wordpress.service.type "NodePort" }}
+  export NODE_PORT=$(kubectl -n {{ .Release.Namespace }} \
+    get svc {{ include "wordpress.fullname" . }} \
+    -o jsonpath="{.spec.ports[0].nodePort}")
+  export NODE_IP=$(kubectl get nodes -o jsonpath="{.items[0].status.addresses[0].address}")
+  echo "http://$NODE_IP:$NODE_PORT"
+{{- else if eq .Values.wordpress.service.type "LoadBalancer" }}
+  echo "Waiting for LoadBalancer external IP..."
+  kubectl -n {{ .Release.Namespace }} get svc {{ include "wordpress.fullname" . }} -w
+  export SERVICE_IP=$(kubectl -n {{ .Release.Namespace }} \
+    get svc {{ include "wordpress.fullname" . }} \
+    -o jsonpath="{.status.loadBalancer.ingress[0].ip}")
+  echo "http://$SERVICE_IP:{{ .Values.wordpress.service.port }}"
+{{- else }}  {{/* ClusterIP or anything else */}}
+  kubectl -n {{ .Release.Namespace }} port-forward \
+    svc/{{ include "wordpress.fullname" . }} {{ .Values.wordpress.service.port }}:{{ .Values.wordpress.service.port }}
+  echo "Visit http://127.0.0.1:{{ .Values.wordpress.service.port }}"
+{{- end }}

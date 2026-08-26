@@ -1,0 +1,6 @@
+id,name,department,salary,hire_date,is_active
+1,Anna Kowalska,Engineering,12500.0,2021-03-15,true
+2,Piotr Nowak,Data Science,14000.0,2020-07-01,true
+3,Maria Wisniewska,MLOps,13500.0,2022-01-10,true
+4,Jan Zielinski,Engineering,11000.0,2019-11-20,false
+5,Karolina Dabrowska,Data Science,15000.0,2023-05-08,true
