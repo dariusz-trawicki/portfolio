@@ -13,6 +13,8 @@ delivery, serving, and monitoring for drift and failure.
 | [etl-net-security](etl-net-security/) | Network threat detection pipeline — ingestion, training, prediction API | Python, FastAPI, MongoDB, Terraform |
 | [airflow-mlflow-prometheus-grafana](airflow-mlflow-prometheus-grafana/) | Orchestrated training pipeline with tracking and full observability | Airflow, MLflow, Prometheus, Grafana, Terraform |
 | [kubeflow-pipeline-kind](kubeflow-pipeline-kind/) | ML pipeline (load → preprocess → train → evaluate) built with Kubeflow Pipelines, running natively on Kubernetes | Kubeflow, KFP, Kubernetes, KIND, scikit-learn |
+| [kubeflow-gcp-vertex](kubeflow-gcp-vertex/) | The same KFP pipeline on managed infrastructure — artifacts in GCS, metrics in ML Metadata, no cluster to run | KFP, Vertex AI, GCP, uv, scikit-learn |
+
 
 ### CI/CD for ML
 
