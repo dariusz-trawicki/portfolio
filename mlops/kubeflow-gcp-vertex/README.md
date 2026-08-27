@@ -158,10 +158,11 @@ Vertex AI Pipelines leaves nothing running after a run completes. Charges are pe
 
 Set a budget alert (Billing → Budgets & alerts) before experimenting with GPUs or model endpoints; endpoints bill for uptime, not requests.
 
-Clean up artifacts:
+Clean up artifacts and bucket:
 
 ```bash
 gcloud storage rm -r ${BUCKET}/pipeline-root
+gcloud storage rm -r ${BUCKET}
 ```
 
 ## Project layout
