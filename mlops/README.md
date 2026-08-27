@@ -12,6 +12,7 @@ delivery, serving, and monitoring for drift and failure.
 | [bearing-fault-detection](bearing-fault-detection/) | Predictive maintenance from streaming sensor data: feature extraction, training, registry, serving | Kafka, MLflow, Airflow, Postgres, Docker |
 | [etl-net-security](etl-net-security/) | Network threat detection pipeline — ingestion, training, prediction API | Python, FastAPI, MongoDB, Terraform |
 | [airflow-mlflow-prometheus-grafana](airflow-mlflow-prometheus-grafana/) | Orchestrated training pipeline with tracking and full observability | Airflow, MLflow, Prometheus, Grafana, Terraform |
+| [kubeflow-pipeline-kind](kubeflow-pipeline-kind/) | ML pipeline (load → preprocess → train → evaluate) built with Kubeflow Pipelines, running natively on Kubernetes | Kubeflow, KFP, Kubernetes, KIND, scikit-learn |
 
 ### CI/CD for ML
 

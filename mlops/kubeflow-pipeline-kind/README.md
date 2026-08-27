@@ -11,6 +11,33 @@
 
 NOTE: The `Kubeflow` docs suggest running local demos via `Docker Desktop > Kubernetes` — BUT in my case it did NOT work: RAM issues. `Minikube` also kept crashing. `KIND` was the stable option.
 
+
+## Prerequisites
+
+- **Docker** — required by KIND, which runs Kubernetes nodes as containers.
+  Give Docker enough resources (RAM/CPU) in its settings — this is the most
+  common cause of pods getting stuck in `ContainerCreating`/`CrashLoopBackOff`
+  on the platform-agnostic Kubeflow install. 8 GB RAM allocated to Docker is
+  a reasonable starting point; increase it if pods keep restarting.
+- **kubectl** — the Kubernetes CLI, used to apply manifests and inspect the cluster.
+- **KIND** (Kubernetes IN Docker) — creates the local cluster.
+- **uv** — used to manage the Python environment and run the `kfp` CLI.
+- **Freelens** (optional) — GUI for browsing the cluster (pods, logs, namespaces).
+
+**macOS (Homebrew):**
+```bash
+brew install docker kubectl kind uv
+brew install --cask freelens   # optional
+
+# Verify everything is in place:
+docker --version
+kubectl version --client
+kind --version
+uv --version
+```
+
+
+
 ## Example: file `kubeflow_pipeline.py`
 
 This is an `ML pipeline` built with `Kubeflow Pipelines` (KFP) on the `Iris` dataset (flowers). It consists of 4 steps:
@@ -45,9 +72,6 @@ kind create cluster --name=kubeflow
 kubectl cluster-info
 
 # Optional: K8s monitoring with Freelens
-# Install Freelens
-brew install --cask freelens
-# Launch it
 open -a Freelens
 # Click the green icon > Clusters > kind-kubeflow >
 # > (top bar) Namespace: kubeflow, then e.g. the Pods tab
@@ -72,7 +96,6 @@ uv sync
 # uv init .
 # uv venv --python 3.11
 # uv add kfp==2.7.0 scikit-learn pandas
-# uv add kfp==2.7.0  # installs both the Python library and the kfp CLI
 # uv run kfp --version  # sanity check
 
 
