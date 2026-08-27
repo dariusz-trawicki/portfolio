@@ -1173,7 +1173,7 @@ wheels = [
 ]
 
 [[package]]
-name = "vertex-demo"
+name = "vertex-kfp-demo"
 version = "0.1.0"
 source = { virtual = "." }
 dependencies = [
