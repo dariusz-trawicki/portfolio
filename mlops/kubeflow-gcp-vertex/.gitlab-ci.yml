@@ -1,0 +1,45 @@
+variables:
+  GCP_PROJECT: "your-project-id"
+  GCP_PROJECT_NUMBER: "your-project-number"
+  GCP_REGION: "europe-central2"
+  WIF_PROVIDER: "projects/${GCP_PROJECT_NUMBER}/locations/global/workloadIdentityPools/gitlab-pool/providers/gitlab-provider"
+
+stages:
+  - compile
+  - submit
+
+compile-pipeline:
+  stage: compile
+  image: python:3.11-slim
+  before_script:
+    - pip install uv
+    - uv sync --frozen --no-dev
+  script:
+    - uv run python -c "from kfp import compiler; from pipeline import iris_pipeline; compiler.Compiler().compile(pipeline_func=iris_pipeline, package_path='iris_pipeline.yaml')"
+  artifacts:
+    paths:
+      - iris_pipeline.yaml
+    expire_in: 1 week
+
+submit-pipeline:
+  stage: submit
+  image: google/cloud-sdk:slim
+  needs: ["compile-pipeline"]
+  id_tokens:
+    GITLAB_OIDC_TOKEN:
+      aud: https://iam.googleapis.com/projects/YOUR_PROJECT_NUMBER/locations/global/workloadIdentityPools/gitlab-pool/providers/gitlab-provider
+  before_script:
+    - echo "$GITLAB_OIDC_TOKEN" > /tmp/gitlab_token.txt
+    - gcloud iam workload-identity-pools create-cred-config "${WIF_PROVIDER}" --output-file=/tmp/wif-creds.json --credential-source-file=/tmp/gitlab_token.txt --credential-source-type=text
+    - export GOOGLE_APPLICATION_CREDENTIALS=/tmp/wif-creds.json
+    - gcloud auth login --cred-file=/tmp/wif-creds.json
+    - pip install uv --break-system-packages
+    - uv sync --frozen --no-dev
+  script:
+    - export PROJECT_ID="${GCP_PROJECT}"
+    - export REGION="${GCP_REGION}"
+    - export BUCKET="gs://${GCP_PROJECT}-kfp"
+    - uv run python submit.py
+  when: manual
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "main"'
