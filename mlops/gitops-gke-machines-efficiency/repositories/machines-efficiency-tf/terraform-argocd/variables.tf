@@ -22,12 +22,12 @@ variable "cluster_name" {
 variable "argocd_chart_version" {
   description = "Pin it. 'latest' is not reproducible."
   type        = string
-  default     = "7.8.2"
+  default     = "10.3.2"
 }
 
 variable "argocd_apps_chart_version" {
   type    = string
-  default = "2.0.2"
+  default = "2.0.5"
 }
 
 variable "config_repo_url" {

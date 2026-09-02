@@ -1,6 +1,7 @@
 variable "project_id" {
   description = "Existing GCP project. Terraform does NOT create it - billing must already be enabled."
   type        = string
+  default     = "<your_project_id>"
 }
 
 variable "region" {
@@ -40,7 +41,8 @@ variable "general_machine_type" {
     once ArgoCD is in the cluster. e2-medium is the practical minimum.
   EOT
   type        = string
-  default     = "e2-medium"
+  # default     = "e2-medium"
+  default = "e2-standard-2"
 }
 
 variable "general_node_count" {
@@ -50,9 +52,12 @@ variable "general_node_count" {
 }
 
 variable "spot_machine_type" {
-  type    = string
-  default = "e2-small"
+  type = string
+  # default = "e2-small"
+  default = "e2-standard-2"
 }
+
+
 
 variable "master_authorized_cidrs" {
   description = <<-EOT

@@ -905,6 +905,7 @@ dependencies = [
     { name = "joblib" },
     { name = "numpy" },
     { name = "pandas" },
+    { name = "prometheus-client" },
     { name = "scikit-learn" },
 ]
 
@@ -922,6 +923,7 @@ requires-dist = [
     { name = "joblib", specifier = ">=1.4" },
     { name = "numpy", specifier = ">=2.0" },
     { name = "pandas", specifier = ">=2.2" },
+    { name = "prometheus-client", specifier = ">=0.26.0" },
     { name = "scikit-learn", specifier = ">=1.5" },
 ]
 

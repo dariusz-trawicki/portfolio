@@ -33,6 +33,13 @@ spec:
         - name: app
           image: europe-central2-docker.pkg.dev/<your_project_id>/mlops-apps/machines-efficiency:REPLACED_BY_CI
           imagePullPolicy: IfNotPresent
+          env:
+            # Bumped by CI alongside the image tag - same value, one yq step.
+            # Ties every metric back to the build that produced it.
+            - name: GIT_SHA
+              value: "REPLACED_BY_CI"
+            - name: MODEL_VERSION
+              value: "unknown"
           ports:
             - name: http
               containerPort: 5000

@@ -1,3 +1,53 @@
+# ---------------------------------------------------------------------------
+# Root Application (app-of-apps).
+#
+# Describes no component of its own - it only points at the apps/ directory in
+# the config repo, where the actual Application objects live (ML app, monitoring).
+# Adding something to the cluster is a Git commit from here on, not a
+# `terraform apply`.
+#
+# Deployed through the argocd-apps Helm chart rather than kubernetes_manifest,
+# because kubernetes_manifest validates CRDs at PLAN time - and the Application
+# CRD does not exist until the release above is applied. Helm renders at apply
+# time, so a single `terraform apply` works.
+# ---------------------------------------------------------------------------
+resource "helm_release" "argocd_apps" {
+  name       = "argocd-apps"
+  repository = "https://argoproj.github.io/argo-helm"
+  chart      = "argocd-apps"
+  version    = var.argocd_apps_chart_version
+  namespace  = "argocd"
+
+  values = [yamlencode({
+    applications = {
+      root = {
+        namespace = "argocd"
+        project   = "default"
+        source = {
+          repoURL        = var.config_repo_url
+          targetRevision = var.config_repo_revision
+          path           = "apps"
+        }
+        destination = {
+          server = "https://kubernetes.default.svc"
+          # Application objects must live in the ArgoCD namespace - that is the
+          # only place the controller looks. CreateNamespace is unnecessary
+          # because the argocd namespace already exists.
+          namespace = "argocd"
+        }
+        syncPolicy = {
+          automated = {
+            prune    = true # remove Applications deleted from apps/
+            selfHeal = true # revert manual kubectl edits
+          }
+        }
+      }
+    }
+  })]
+
+  depends_on = [helm_release.argocd]
+}
+
 resource "helm_release" "argocd" {
   name             = "argocd"
   repository       = "https://argoproj.github.io/argo-helm"
@@ -18,75 +68,26 @@ resource "helm_release" "argocd" {
       }
     }
     server = {
-      # ClusterIP keeps the UI off the internet and off the bill.
-      # Switch to LoadBalancer only after configuring real authentication.
       service   = { type = "ClusterIP" }
       resources = { requests = { cpu = "50m", memory = "128Mi" } }
+      metrics   = { enabled = true, serviceMonitor = { enabled = true } }
     }
     controller = {
       resources = { requests = { cpu = "100m", memory = "256Mi" } }
+      metrics   = { enabled = true, serviceMonitor = { enabled = true } }
     }
     repoServer = {
       resources = { requests = { cpu = "50m", memory = "128Mi" } }
+      metrics   = { enabled = true, serviceMonitor = { enabled = true } }
     }
-    # Not needed for a single Application - saves memory on a small cluster
+    # App-of-apps uses plain Applications in a directory - ApplicationSet is
+    # only needed for generating them from a list (e.g. one per environment).
     applicationSet = { enabled = false }
     # No SSO in a demo
     dex = { enabled = false }
   })]
 }
 
-resource "kubernetes_namespace" "app" {
-  metadata {
-    name = var.app_namespace
-  }
-}
-
-# ---------------------------------------------------------------------------
-# The ArgoCD Application.
-#
-# Deployed through the argocd-apps Helm chart rather than kubernetes_manifest,
-# because kubernetes_manifest validates CRDs at PLAN time - and the Application
-# CRD does not exist until the release above is applied. Helm renders at apply
-# time, so a single `terraform apply` works.
-# ---------------------------------------------------------------------------
-resource "helm_release" "argocd_apps" {
-  name       = "argocd-apps"
-  repository = "https://argoproj.github.io/argo-helm"
-  chart      = "argocd-apps"
-  version    = var.argocd_apps_chart_version
-  namespace  = "argocd"
-
-  values = [yamlencode({
-    applications = {
-      (var.app_name) = {
-        namespace = "argocd"
-        project   = "default"
-        source = {
-          repoURL        = var.config_repo_url
-          targetRevision = var.config_repo_revision
-          path           = var.config_repo_path
-        }
-        destination = {
-          server    = "https://kubernetes.default.svc"
-          namespace = var.app_namespace
-        }
-        syncPolicy = {
-          automated = {
-            prune    = true # remove resources deleted from Git
-            selfHeal = true # revert manual kubectl edits
-          }
-          syncOptions = ["CreateNamespace=true"]
-        }
-      }
-    }
-  })]
-
-  depends_on = [
-    helm_release.argocd,
-    kubernetes_namespace.app,
-  ]
-}
 
 resource "kubernetes_secret" "config_repo" {
   metadata {

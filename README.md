@@ -20,7 +20,7 @@
 | Project | What it does | Stack |
 |---|---|---|
 | [water-network-optimization](ai/predictive-modeling-optimization/water-network-optimization/) | Hydraulic network optimization: MILP with [piecewise linearization with SOS2 constraints](ai/predictive-modeling-optimization/water-network-optimization/piecewise-linearisation-demo/)| EPANET, Pyomo/MILP, Python |
-| [gitops-gke-machines-efficiency](mlops/gitops-gke-machines-efficiency/) | ML model delivered to GKE declaratively — code, manifests and infrastructure in separate repos, synced by ArgoCD | ArgoCD, GKE, Terraform, GitHub Actions |
+| [gitops-gke-machines-efficiency](mlops/gitops-gke-machines-efficiency/) | ML model delivered to GKE declaratively — code, manifests and infrastructure in separate repos, synced by ArgoCD | GKE, Terraform, ArgoCD, GitHub Actions, Prometheus, Grafana |
 | [with-llm-bielik-on-ec2](ai/llm-rag/with-llm-bielik-on-ec2/) | RAG over a self-hosted Polish LLM, with its own embedding service and vector store | Bielik, EC2, Docker, Terraform |
 | [k8s-mlflow-data-drift-grafana](mlops/k8s-mlflow-data-drift-grafana/) | Model serving on Kubernetes with data drift detection and dashboards | Kubernetes, MLflow, Prometheus, Grafana |
 | [bearing-fault-detection](mlops/bearing-fault-detection/) | Predictive maintenance end to end: streaming sensor data, feature extraction, model registry, serving API | Kafka, MLflow, Airflow, Postgres, Docker |

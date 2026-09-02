@@ -66,15 +66,18 @@ jobs:
       - name: Bump image tag
         env:
           NEW_IMAGE: ${{ env.IMAGE }}:${{ github.sha }}
+          NEW_SHA: ${{ github.sha }}
         run: |
           cd config
-          yq -i '(.spec.template.spec.containers[] | select(.name == "app") | .image) = strenv(NEW_IMAGE)' k8s/deployment.yaml
+          yq -i '
+            (.spec.template.spec.containers[] | select(.name == "app") | .image) = strenv(NEW_IMAGE) |
+            (.spec.template.spec.containers[] | select(.name == "app") | .env[] | select(.name == "GIT_SHA") | .value) = strenv(NEW_SHA)
+          ' k8s/deployment.yaml
 
           grep -q "$NEW_IMAGE" k8s/deployment.yaml || {
             echo "yq didn't replace the tag - check the container name in the manifest"
             exit 1
           }
-
           if git diff --quiet; then
             echo "No change - the manifest already points to this image"
             exit 0
@@ -83,4 +86,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git commit -am "deploy: machines-efficiency ${GITHUB_SHA::7}"
+          git pull --rebase
           git push

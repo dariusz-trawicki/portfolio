@@ -1,0 +1,15 @@
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: machines-efficiency
+  namespace: mlops
+  labels:
+    app: machines-efficiency
+spec:
+  selector:
+    matchLabels:
+      app: machines-efficiency
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s

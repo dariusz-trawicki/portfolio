@@ -1,0 +1,30 @@
+# Virtual environment
+.venv/
+venv/
+
+# Python bytecode / caches
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+artifacts/*
+!artifacts/models/
+!artifacts/models/**
+
+# Runtime logs
+logs/
+
+# Env files with secrets
+.env
+.env.*
+
+# System / editor
+.DS_Store
+.vscode/
+.idea/

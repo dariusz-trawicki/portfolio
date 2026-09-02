@@ -1,0 +1,54 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring
+  namespace: argocd
+  annotations:
+    # Wave 0 - the stack installs the Prometheus CRDs that later waves depend on.
+    argocd.argoproj.io/sync-wave: "0"
+spec:
+  project: default
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: "88.2.0"
+    helm:
+      values: |
+        prometheus:
+          prometheusSpec:
+            retention: 6h
+            # emptyDir instead of a PVC - a persistent disk on GKE bills
+            # whether or not the cluster runs. Pod restart loses the metrics.
+            storageSpec: {}
+            resources:
+              requests: { cpu: 200m, memory: 1Gi }
+              limits:   { memory: 2Gi }
+            # Scrape ServiceMonitors from the whole cluster, not just the ones
+            # labelled release=monitoring. Without this the app's own
+            # ServiceMonitor is silently ignored - no error, empty target list.
+            serviceMonitorSelectorNilUsesHelmValues: false
+        grafana:
+          adminPassword: admin      # change after first login
+          service:
+            type: ClusterIP         # reachable via port-forward only
+          persistence:
+            enabled: false
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+        alertmanager:
+          alertmanagerSpec:
+            resources:
+              requests: { cpu: 50m, memory: 100Mi }
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      # Required - the Prometheus CRDs exceed the 262 kB annotation limit that
+      # client-side apply relies on. Without this the sync fails with an error
+      # about the annotation, which says nothing about the real cause.
+      - ServerSideApply=true
+      - CreateNamespace=true
