@@ -42,7 +42,8 @@ across AWS and GCP.
 | Project | Description | Stack |
 |---|---|---|
 | [argocd-canary](gitops/argocd-canary/) | Progressive delivery with canary rollouts and automated analysis, including a deliberately broken release to show rollback | ArgoCD, Argo Rollouts, Kubernetes |
-| [ml-machines-efficiency](gitops/ml-machines-efficiency/) | ML model delivered to GKE declaratively — full project in [mlops](../mlops/gitops-gke-machines-efficiency/) | ArgoCD, GKE, Terraform |
+| [ml-machines-efficiency](../mlops/gitops-gke-machines-efficiency/) | ML model delivered to GKE declaratively | ArgoCD, GKE, Terraform |
 | [github-actions](ci-cd/github-actions/) | Reusable workflows deploying to EKS/ECR and to EC2 with Terraform | GitHub Actions, Docker, Terraform |
 | [jenkins/tf-eks-github](ci-cd/jenkins/tf-eks-github/) | Jenkins server provisioned as code, building and deploying to EKS with S3-backed state | Jenkins, Terraform, EKS |
 | [jenkins/tf-ec2-with-docker-ci](ci-cd/jenkins/tf-ec2-with-docker-ci/) | Jenkins on EC2 with Docker-based CI, bootstrapped via user data | Jenkins, Terraform, EC2, Docker |
+| [gitops-gke-iris-kustomize](../mlops/gitops-gke-iris-kustomize/) | PyTorch classifier promoted dev→prod through pull requests, images pinned by digest, no static credentials | ArgoCD, GKE, Terraform, Kustomize|
