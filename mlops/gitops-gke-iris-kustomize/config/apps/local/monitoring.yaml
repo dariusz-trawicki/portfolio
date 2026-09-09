@@ -1,0 +1,64 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: monitoring-local
+  namespace: argocd
+spec:
+  project: default
+
+  source:
+    repoURL: https://prometheus-community.github.io/helm-charts
+    chart: kube-prometheus-stack
+    targetRevision: 65.5.1
+    helm:
+      releaseName: monitoring
+      valuesObject:
+        # Disable monitors for control-plane components that KIND doesn't expose
+        kubeControllerManager: { enabled: false }
+        kubeScheduler: { enabled: false }
+        kubeEtcd: { enabled: false }
+        kubeProxy: { enabled: false }
+
+        prometheus:
+          prometheusSpec:
+            # lets Prometheus see ServiceMonitors outside the release namespace
+            serviceMonitorSelectorNilUsesHelmValues: false
+            podMonitorSelectorNilUsesHelmValues: false
+            ruleSelectorNilUsesHelmValues: false
+            retention: 6h
+            resources:
+              requests: { cpu: 100m, memory: 512Mi }
+              limits: { memory: 1Gi }
+            storageSpec: {}  # no PVC — data is lost on restart, acceptable on KIND
+
+        alertmanager:
+          enabled: false  # unused in this demo, saves memory
+
+        grafana:
+          adminPassword: admin  # demo-only credential, KIND cluster is not internet-reachable
+          persistence: { enabled: false }
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { memory: 256Mi }
+          sidecar:
+            dashboards:
+              enabled: true
+              label: grafana_dashboard
+              searchNamespace: ALL
+
+        prometheusOperator:
+          resources:
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { memory: 256Mi }
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: monitoring
+
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true
+      - ServerSideApply=true

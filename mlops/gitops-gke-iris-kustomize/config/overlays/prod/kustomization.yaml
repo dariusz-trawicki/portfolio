@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: iris-prod
+resources:
+  - ../../base/iris-api
+  - namespace.yaml
+patches:
+  - path: patch-serviceaccount.yaml
+  - path: patch-resources.yaml
+images:
+  - name: iris-api-placeholder
+    newName: europe-central2-docker.pkg.dev/PROJECT_ID/iris/api
+    digest: sha256:e98dd6db5e55900c89d18486656564d6d344f88a9fd7b0e8062c6b1f9235fe7d
+configMapGenerator:
+  - name: iris-api-config
+    behavior: merge
+    literals:
+      - MODEL_URI=gs://PROJECT_ID-models/1788787675/

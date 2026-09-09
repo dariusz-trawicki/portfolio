@@ -20,11 +20,11 @@ delivery, serving, and monitoring for drift and failure.
 
 | Project | Description | Stack |
 |---|---|---|
+| [gitops-gke-machines-efficiency](gitops-gke-machines-efficiency/) | Model delivery to GKE managed declaratively through Git | GKE, Terraform, ArgoCD, GitHub Actions, Prometheus, Grafana |
 | [cicd-with-gke-and-tf](cicd-with-gke-and-tf/) | Model application built, tested and deployed to managed Kubernetes | GKE, Terraform, GitHub Actions |
 | [e2e-flask-jenkins-ecs](e2e-flask-jenkins-ecs/) | Training, packaging and deployment driven by a Jenkins pipeline | Jenkins, Flask, ECS, Terraform |
 | [cicd-with-ec2-and-tf](cicd-with-ec2-and-tf/) | Automated delivery of a model service to EC2 | Terraform, EC2, GitHub Actions |
-| [gitops-gke-machines-efficiency](gitops-gke-machines-efficiency/) | Model delivery to GKE managed declaratively through Git | GKE, Terraform, ArgoCD, GitHub Actions, Prometheus, Grafana |
-
+| [gitops-gke-iris-kustomize](gitops-gke-iris-kustomize/) | PyTorch classifier promoted dev→prod through pull requests, images pinned by digest, no static credentials | GKE, ArgoCD, Kustomize, Terraform, GitHub Actions, Prometheus, Grafana |
 
 ### Serving
 

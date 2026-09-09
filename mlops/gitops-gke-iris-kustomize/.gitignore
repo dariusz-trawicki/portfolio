@@ -1,0 +1,70 @@
+# --- Secrets and credentials ---
+*.pem
+*.key
+id_*
+!id_*.pub.example
+.env
+.env.*
+!.env.example
+*-credentials.json
+*-key.json
+service-account*.json
+
+# --- Terraform ---
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+*.tfvars
+!*.tfvars.example
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraformrc
+terraform.rc
+tfplan
+*.tfplan
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+htmlcov/
+
+# --- ML artifacts ---
+artifacts/
+*.pt
+*.pth
+*.onnx
+!**/tests/**/*.pt
+
+# --- Kubernetes / local dev ---
+kubeconfig
+kubeconfig-*
+*.kubeconfig
+
+# --- k6 ---
+summary.json
+*.k6-results.json
+
+# --- OS / editor ---
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*~

@@ -1,0 +1,23 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: iris-api-dev
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: git@github.com:dariusz-trawicki/iris-mlops-config.git
+    targetRevision: main
+    path: overlays/dev
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: iris-dev
+  syncPolicy:
+    automated: { prune: true, selfHeal: true }
+    syncOptions:
+      - CreateNamespace=true
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas

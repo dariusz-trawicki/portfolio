@@ -1,0 +1,26 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: iris-test
+
+resources:
+  - ../../base/iris-api
+  - namespace.yaml
+
+images:
+  - name: iris-api-placeholder
+    newName: localhost:5001/iris/api
+    newTag: dev
+
+configMapGenerator:
+  - name: iris-api-config
+    behavior: merge
+    literals:
+      - MODEL_URI=gs://iris-models/models/1788513549/
+      - STORAGE_EMULATOR_HOST=http://fake-gcs.iris-local.svc.cluster.local:4443
+
+patches:
+  - path: patch-resources.yaml
+    target:
+      kind: Deployment
+      name: iris-api

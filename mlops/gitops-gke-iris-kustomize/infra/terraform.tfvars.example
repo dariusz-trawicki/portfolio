@@ -1,0 +1,4 @@
+project_id     = "<PROJECT_ID>"
+github_owner   = "<GITHUB_OWNER>"
+enable_gke     = true # creates the cluster and node pool.
+use_spot_nodes = false

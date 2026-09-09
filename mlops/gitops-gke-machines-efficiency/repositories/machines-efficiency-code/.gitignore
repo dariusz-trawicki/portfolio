@@ -16,6 +16,8 @@ __pycache__/
 artifacts/*
 !artifacts/models/
 !artifacts/models/**
+!artifacts/raw/
+!artifacts/raw/**
 
 # Runtime logs
 logs/

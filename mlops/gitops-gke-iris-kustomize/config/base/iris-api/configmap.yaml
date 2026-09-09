@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: iris-api-config
+data:
+  MODEL_URI: "REPLACE_ME"
+  PROMETHEUS_DISABLE_CREATED_SERIES: "true"

@@ -1,0 +1,30 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: k6-iris-load
+spec:
+  backoffLimit: 0
+  ttlSecondsAfterFinished: 3600
+  template:
+    metadata:
+      labels:
+        app: k6-iris-load
+    spec:
+      restartPolicy: Never
+      containers:
+        - name: k6
+          image: grafana/k6:0.53.0
+          args: ["run", "/scripts/k6-script.js"]
+          env:
+            - name: TARGET_URL
+              value: "http://iris-api"
+          volumeMounts:
+            - name: scripts
+              mountPath: /scripts
+          resources:
+            requests: { cpu: 200m, memory: 128Mi }
+            limits: { memory: 512Mi }
+      volumes:
+        - name: scripts
+          configMap:
+            name: k6-iris-script

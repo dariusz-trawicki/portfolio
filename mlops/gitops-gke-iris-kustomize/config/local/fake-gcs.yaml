@@ -1,0 +1,42 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: iris-local
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fake-gcs
+  namespace: iris-local
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: fake-gcs }
+  template:
+    metadata:
+      labels: { app: fake-gcs }
+    spec:
+      containers:
+        - name: fake-gcs
+          image: fsouza/fake-gcs-server:1.49
+          args:
+            - "-scheme=http"
+            - "-port=4443"
+            - "-external-url=http://fake-gcs.iris-local.svc.cluster.local:4443"
+            - "-backend=memory"
+          ports:
+            - containerPort: 4443
+          resources:
+            requests: { cpu: 20m, memory: 64Mi }
+            limits: { memory: 128Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fake-gcs
+  namespace: iris-local
+spec:
+  selector: { app: fake-gcs }
+  ports:
+    - port: 4443
+      targetPort: 4443

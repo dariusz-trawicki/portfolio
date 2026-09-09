@@ -1,0 +1,9 @@
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: iris-api
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: iris-api
