@@ -46,6 +46,7 @@ from experiments to models running in the cloud.
 | [fine-tuning/pllum-kaggle-pl](fine-tuning/pllum-kaggle-pl/) | Fine-tuning a Polish open model for a domain task | PyTorch, HuggingFace, PEFT |
 | [fine-tuning/news-class](fine-tuning/news-class/) | Fine-tuned classifier for news categorization | Transformers, PyTorch |
 | [llm-deployment/idps-aws-bedrock](llm-deployment/idps-aws-bedrock/) | Intelligent document processing — invoices in JPG, PDF and PNG parsed by a multimodal model | AWS Bedrock, Python |
+| [llm-deployment/vllm-serving-colab-t4](llm-deployment/vllm-serving-colab-t4/) | Self-hosted LLM served via vLLM's OpenAI-compatible API | vLLM, PyTorch, OpenAI SDK |
 
 ### Computer vision
 
