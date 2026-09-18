@@ -1,4 +1,9 @@
-# Portfolio
+
+# Dariusz Trawicki — MLOps / DevOps Engineer
+**Open to:** MLOps / DevOps / ML Engineer roles · B2B or employment · remote
+
+**Contact:**
+[LinkedIn](https://www.linkedin.com/in/dariusz-trawicki-7809582b0/) · dariusz.trawicki@dartit.pl
 
 ## Structure
 
@@ -43,7 +48,3 @@
 
 **Certifications**
 - HashiCorp Certified: Terraform Associate (003) — [2025]
-
-## Contact
-
-[LinkedIn](https://www.linkedin.com/in/dariusz-trawicki-7809582b0/) · dariusz.trawicki@dartit.pl
