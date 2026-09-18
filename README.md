@@ -39,41 +39,10 @@
 - **Data** — Kafka, Spark, PostgreSQL, MySQL, Elasticsearch
 
 
-## Certifications & Training
+## Certifications
 
 **Certifications**
 - HashiCorp Certified: Terraform Associate (003) — [2025]
-
-**Selected courses (udemy.com etc.)**
-- **Cloud & IaC** — Terraform (intro + GCP) · AWS Certified Cloud Practitioner · Google Cloud systems administration
-- **MLOps** — Complete MLOps Bootcamp (10+ end-to-end ML projects) · MLOps on GCP: CI/CD, Kubernetes, Jenkins
-- **DevOps** — Kubernetes from scratch · GitOps & real-time DevOps projects · Decoding DevOps: from basics to advanced
-- **Data & tooling** — Apache Airflow: The Hands-On Guide · Docker · Git
-
-<details>
-<summary>Earlier background — web development (PHP / Symfony / Laravel)</summary>
-
-**PHP frameworks**
-- Symfony — Zbuduj aplikację mikroblog od podstaw
-- Symfony & PHP Mastery: Build a Social Web App
-- Zbuduj pierwszą aplikację w Symfony 6
-- Laravel & PHP Mastery: Build 5 Real-World Projects
-- Laravel Framework — wielkie kompendium programisty PHP
-- Kurs Laravel — tworzenie aplikacji
-
-**Frontend & CMS**
-- Kurs HTML5 zaawansowany
-- Kurs Tailwind CSS
-- Kurs Bootstrap 3 / Bootstrap 4
-- Kurs Foundation
-- Tworzenie profesjonalnych stron z WordPress
-- Tworzenie profesjonalnych sklepów z WooCommerce
-
-**Other**
-- Jira od podstaw: zarządzanie projektami Agile
-
-<sub>Sources: udemy.com, strefakursow.pl</sub>
-</details>
 
 ## Contact
 
