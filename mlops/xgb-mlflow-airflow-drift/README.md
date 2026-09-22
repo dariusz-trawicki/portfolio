@@ -124,7 +124,7 @@ Model v1 was trained on baseline data; v2 was trained on drifted production data
 ## Key design decisions
 
 - **Alias-based serving.** The API asks the registry "what is `champion` right now?" instead of pinning a version. Rollback is one `set_registered_model_alias` call. The check is lazy (on request, at most every `REFRESH_SECONDS`), so no background thread is needed, and a concrete version (not the alias) is loaded to avoid a race if the alias moves mid-load.
-- **Champion/challenger gate.** The challenger must beat the champion by ≥ 2 % RMSE on the same test split of the new data. Retraining on identical data produces an identical model that is *rejected*, which prevents alias flapping.
+- **Champion/challenger gate.** The challenger is promoted only if its RMSE is at least 2% lower than the champion's RMSE on the same test split of the new data. Retraining on identical data produces an identical model that is *rejected*, which prevents alias flapping.
 - **Two-criteria drift flag.** A feature counts as drifted only if the KS p-value < 0.01 *and* PSI ≥ 0.1. With large samples KS alone flags statistically significant but practically meaningless differences.
 - **Custom KS/PSI instead of Evidently.** Fewer dependencies and no version conflicts with Airflow's pinned constraints. Swapping in Evidently touches only `compute_drift`.
 - **Orchestration is separated from logic.** DAGs only wire tasks together. All ML code lives in `src/mlops_demo/` with no Airflow imports, so it can be imported and run without Airflow. Heavy imports (`xgboost`, `mlflow`) happen inside tasks, keeping DAG parsing fast.
