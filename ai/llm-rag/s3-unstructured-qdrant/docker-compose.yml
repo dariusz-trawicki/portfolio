@@ -1,0 +1,17 @@
+# Local infrastructure: S3-compatible object storage + vector database.
+services:
+  s3:
+    image: chrislusf/seaweedfs:latest
+    # Single-node server with the S3 gateway enabled; no auth in local mode.
+    command: server -dir=/data -s3
+    ports:
+      - "8333:8333"
+    volumes:
+      - ./data/seaweedfs:/data
+
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"   # REST API + web dashboard
+    volumes:
+      - ./data/qdrant:/qdrant/storage

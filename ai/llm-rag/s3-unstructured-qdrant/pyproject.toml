@@ -1,0 +1,35 @@
+[project]
+name = "rag-pipeline-demo"
+version = "0.1.0"
+description = "Document ingestion pipeline for RAG: S3 -> Unstructured -> Qdrant"
+readme = "README.md"
+requires-python = ">=3.11,<3.13"
+dependencies = [
+    "boto3>=1.34",
+    "python-dotenv>=1.0",
+    "qdrant-client>=1.12",
+    "sentence-transformers>=3.0",
+    "unstructured[md,pdf]>=0.16",
+]
+
+[project.scripts]
+rag-seed = "rag_pipeline.seed:main"
+rag-ingest = "rag_pipeline.ingest:main"
+rag-search = "rag_pipeline.search:main"
+
+[dependency-groups]
+dev = ["ruff>=0.6"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/rag_pipeline"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]

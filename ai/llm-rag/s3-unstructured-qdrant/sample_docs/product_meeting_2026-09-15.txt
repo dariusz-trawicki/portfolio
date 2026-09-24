@@ -1,0 +1,29 @@
+PRODUCT TEAM MEETING NOTES
+Date: September 15, 2026
+Attendees: Anna Carter (Product Owner), Mark Hughes (Tech Lead), Emma Novak (UX), Peter Walsh (Sales)
+
+TOPIC 1: CloudNest Backup 3.0 release delay
+
+Mark reported that the 3.0 release will slip from October 1 to October 22, 2026. The cause is a performance issue in the new deduplication engine for backups larger than 500 GB. Tests showed a slowdown of about 40 percent compared to version 2.8.
+
+Decision: the backend team will focus exclusively on deduplication optimization until October 10. The PDF report export feature is moved to version 3.1.
+
+TOPIC 2: User research findings
+
+Emma presented results from usability tests with 12 customers. The most common problem: users cannot find the option to restore a single file. 8 out of 12 participants looked for it in the settings menu instead of the Version history tab.
+
+Decision: version 3.0 will add a "Restore file" button directly on the main dashboard.
+
+TOPIC 3: Feedback from Sales
+
+Peter reported that three large customers are asking whether backups can be stored in a data center in Germany. The combined value of these contracts is approximately 45,000 EUR per year.
+
+Decision: Anna will prepare a cost analysis for a Frankfurt location by September 30.
+
+ACTION ITEMS
+- Mark: deduplication optimization report - due October 10
+- Emma: mockups of the new main dashboard - due September 25
+- Anna: Frankfurt location cost analysis - due September 30
+- Peter: notify customers about the new release date - due September 18
+
+Next meeting: September 29, 2026, 10:00 AM, Neptune room.
