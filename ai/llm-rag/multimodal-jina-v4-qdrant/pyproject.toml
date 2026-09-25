@@ -1,0 +1,11 @@
+[project]
+name = "jina-v4-multimodal-demo"
+version = "0.1.0"
+description = "Multimodal search (text + images) with jina-embeddings-v4 and Qdrant"
+requires-python = ">=3.10"
+dependencies = [
+    "matplotlib",
+    "python-dotenv",
+    "qdrant-client",
+    "requests",
+]

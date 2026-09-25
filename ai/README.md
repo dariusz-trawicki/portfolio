@@ -28,6 +28,7 @@ from experiments to models running in the cloud.
 | [llm-rag/vectorless-pageindex](llm-rag/vectorless-pageindex/) | Retrieval without a vector database — page-level indexing approach | Python, LLM API |
 | [llm-rag/local-langchain-huggingface](llm-rag/local-langchain-huggingface/) | Fully local RAG, no external API calls | LangChain, HuggingFace, FAISS |
 | [llm-rag/graphrag-neo4j](llm-rag/graphrag-neo4j/) | GraphRAG — LLM-driven knowledge graph extraction with vector retrieval over the graph | Neo4j, neo4j-graphrag, Anthropic API |
+| [llm-rag/multimodal-jina-v4-qdrant](llm-rag/multimodal-jina-v4-qdrant/) | Cross-modal retrieval: text and images in one embedding space and one collection, searched in all directions (text↔image) | jina-embeddings-v4, Qdrant, Python |
 
 ### Agents
 
