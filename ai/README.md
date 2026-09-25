@@ -38,6 +38,7 @@ from experiments to models running in the cloud.
 | [llm-agents/langgraph-openai-tavily](llm-agents/langgraph-openai-tavily/) | Graph-based agent with web search as a tool | LangGraph, OpenAI, Tavily |
 | [llm-agents/realtime-groq-gpt-voice-chat](llm-agents/realtime-groq-gpt-voice-chat/) | Low-latency voice conversation | Groq, OpenAI, streaming audio |
 | [llm-agents/local-text-chat-with-tavily-ollama](llm-agents/local-text-chat-with-tavily-ollama/) | Local model with optional web search — offline and online agent variants side by side | Ollama, Tavily, Python |
+| [llm-agents/haystack-movie-recommender](llm-agents/haystack-movie-recommender/) | LLM agent decomposing natural-language queries into sparse search + metadata filters | Haystack, Qdrant, FastEmbed (SPLADE), Claude |
 
 ### Deployment & fine-tuning
 
