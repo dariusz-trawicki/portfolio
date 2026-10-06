@@ -1,0 +1,18 @@
+global:
+  scrape_interval: 5s
+  evaluation_interval: 5s
+
+scrape_configs:
+  # The teacher running natively on the host (macOS dev setup, `make run`).
+  - job_name: teacher-host
+    static_configs:
+      - targets: ["host.docker.internal:9100"]
+        labels:
+          deployment: native
+
+  # The teacher running in Docker (`make up-app`).
+  - job_name: teacher-container
+    static_configs:
+      - targets: ["teacher:9100"]
+        labels:
+          deployment: container

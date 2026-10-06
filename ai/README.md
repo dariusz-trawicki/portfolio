@@ -39,6 +39,7 @@ from experiments to models running in the cloud.
 | [llm-agents/realtime-groq-gpt-voice-chat](llm-agents/realtime-groq-gpt-voice-chat/) | Low-latency voice conversation | Groq, OpenAI, streaming audio |
 | [llm-agents/local-text-chat-with-tavily-ollama](llm-agents/local-text-chat-with-tavily-ollama/) | Local model with optional web search — offline and online agent variants side by side | Ollama, Tavily, Python |
 | [llm-agents/haystack-movie-recommender](llm-agents/haystack-movie-recommender/) | LLM agent decomposing natural-language queries into sparse search + metadata filters | Haystack, Qdrant, FastEmbed (SPLADE), Claude |
+| [llm-agents/local-english-teacher](llm-agents/local-english-teacher/) | Fully local voice English tutor: speech in, spoken answer and grammar correction out, with persistent mistake memory and Prometheus/Grafana latency monitoring | FastRTC (WebRTC), faster-Whisper, Ollama, Piper / macOS `say`, Prometheus, Grafana, Docker |
 
 ### Deployment & fine-tuning
 

@@ -1,0 +1,38 @@
+# Local English Teacher configuration.
+# Precedence: these values < environment variables (TEACHER_<SECTION>__<FIELD>) < CLI flags.
+
+llm:
+  model: llama3.1:8b
+  host: http://localhost:11434
+  num_ctx: 8192
+  num_predict: 150
+  temperature: 0.6
+  keep_alive: 30m         # keep the model in memory between turns (Ollama default: 5m)
+  warmup: true            # load the model at startup, so the first answer is not slow
+
+stt:
+  model_size: medium      # small | medium | large-v3
+  device: cpu
+  compute_type: int8
+  beam_size: 5
+  language: en
+
+tts:
+  backend: auto           # auto = `say` on macOS, Piper elsewhere
+  say_voice: Samantha
+  piper_model: models/en_US-lessac-medium.onnx
+  chunk_seconds: 0.5
+
+teacher:
+  level: B2
+  topic: job interview for an MLOps or AI engineer position, the teacher acts as the interviewer
+  max_history_messages: 40
+  max_mistakes_in_prompt: 8
+  mistakes_file: data/teacher_mistakes.json
+
+server:
+  host: 127.0.0.1
+  port: 7860
+  metrics_enabled: true
+  metrics_host: 0.0.0.0
+  metrics_port: 9100
