@@ -1,0 +1,127 @@
+# Catalogue of faults that can be injected. It doubles as the evaluation set:
+# `expected` is the ground truth the agent's diagnosis is scored against (step 4).
+#
+# inject.type:
+#   flag  -> a feature-flag change in flagd (faults built into OTel Demo)
+#   k8s   -> a Kubernetes change (bad deploy, bad config, memory limit too low)
+#
+# Categories and actions must match the enums in src/incident_agent/state.py.
+
+scenarios:
+  - id: payment-failure
+    description: "50% of payment charge calls fail"
+    inject: {type: flag, flag: paymentFailure, variant: "50%"}
+    alert_service: checkout
+    expected:
+      culprit_service: payment
+      category: [feature_flag, application_bug]
+      action: [disable_feature_flag]
+
+  - id: payment-unreachable-flag
+    description: "checkout calls payment at a wrong address (flag)"
+    inject: {type: flag, flag: paymentUnreachable, variant: "on"}
+    alert_service: checkout
+    expected:
+      culprit_service: checkout
+      category: [feature_flag]
+      action: [disable_feature_flag]
+
+  # Same symptom as above, different cause: bad configuration shipped with a deploy.
+  # A good test of whether the agent looks at changes instead of guessing from symptoms.
+  - id: payment-unreachable-deploy
+    description: "checkout deployed with a bad PAYMENT_ADDR"
+    inject:
+      type: k8s
+      cmd: ["kubectl", "set", "env", "deployment/checkout", "PAYMENT_ADDR=payment-v2:8080"]
+    alert_service: checkout
+    expected:
+      culprit_service: checkout
+      category: [config_change, bad_deploy]
+      action: [rollback_deployment]
+
+  - id: cart-failure
+    description: "50% of EmptyCart calls hit a failing cart store"
+    inject: {type: flag, flag: cartFailure, variant: "50%"}
+    alert_service: cart
+    expected:
+      culprit_service: cart
+      category: [feature_flag, application_bug]
+      action: [disable_feature_flag]
+
+  - id: product-catalog-failure
+    description: "GetProduct fails for one product"
+    inject: {type: flag, flag: productCatalogFailure, variant: "on"}
+    alert_service: product-catalog
+    expected:
+      culprit_service: product-catalog
+      category: [feature_flag, application_bug]
+      action: [disable_feature_flag]
+
+  - id: recommendation-memory-leak
+    description: "exponentially growing cache in recommendation"
+    inject: {type: flag, flag: recommendationCacheFailure, variant: "on"}
+    alert_service: recommendation
+    expected:
+      culprit_service: recommendation
+      category: [memory_leak, feature_flag]
+      action: [disable_feature_flag]
+
+  - id: email-memory-leak
+    description: "memory leak in email"
+    inject: {type: flag, flag: emailMemoryLeak, variant: "1000x"}
+    alert_service: email
+    expected:
+      culprit_service: email
+      category: [memory_leak, feature_flag]
+      action: [disable_feature_flag]
+
+  - id: ad-high-cpu
+    description: "high CPU usage in ad"
+    inject: {type: flag, flag: adHighCpu, variant: "on"}
+    alert_service: ad
+    expected:
+      culprit_service: ad
+      category: [cpu_saturation, feature_flag]
+      action: [disable_feature_flag]
+
+  - id: kafka-lag
+    description: "overloaded Kafka queue + slow consumer"
+    inject: {type: flag, flag: kafkaQueueProblems, variant: "on"}
+    alert_service: fraud-detection
+    expected:
+      culprit_service: fraud-detection
+      category: [queue_backlog, feature_flag]
+      action: [disable_feature_flag]
+
+  - id: cart-not-ready
+    description: "cart readiness probe fails"
+    inject: {type: flag, flag: failedReadinessProbe, variant: "on"}
+    alert_service: cart
+    expected:
+      culprit_service: cart
+      category: [feature_flag, application_bug]
+      action: [disable_feature_flag]
+
+  - id: bad-image
+    description: "product-catalog deployed with a non-existent image"
+    inject:
+      type: k8s
+      cmd: ["kubectl", "set", "image", "deployment/product-catalog", "product-catalog=ghcr.io/open-telemetry/demo:does-not-exist"]
+    alert_service: product-catalog
+    expected:
+      culprit_service: product-catalog
+      category: [bad_deploy]
+      action: [rollback_deployment]
+
+  # The limit must be BELOW actual usage. The first version (6Mi) broke nothing: currency (C++)
+  # peaks at ~4.7 MiB (measured: max_over_time of the working set over 1h), so it kept running at 78% of the limit.
+  - id: currency-oom
+    description: "currency memory limit lowered to 2Mi (below its ~3.5-4.7 MiB working set) -> OOMKilled"
+    inject:
+      type: k8s
+      cmd: ["kubectl", "set", "resources", "deployment/currency", "--limits=memory=2Mi"]
+    alert_service: currency
+    expected:
+      culprit_service: currency
+      category: [resource_limits, bad_deploy, config_change]
+      action: [rollback_deployment, increase_resources]

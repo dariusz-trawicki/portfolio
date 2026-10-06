@@ -1,0 +1,25 @@
+# Overlay for infra/otel-demo-values.yaml: Alertmanager sends alerts to the agent
+# running IN the cluster instead of `make serve` on your laptop.
+#
+# Used automatically by `make apply-values` / `make agent-route` while the marker file
+# .data/agent-in-cluster exists (`make agent-up` creates it, `make agent-down` removes it).
+#
+# The bearer token is read from a file mounted from the Secret otel-demo/incident-agent-webhook
+# (created by `make agent-secrets`), so it never appears in values, git or `helm get values`.
+prometheus:
+  alertmanager:
+    extraSecretMounts:
+      - name: incident-agent-webhook
+        mountPath: /etc/alertmanager/incident-agent
+        secretName: incident-agent-webhook
+        readOnly: true
+    config:
+      receivers:
+        - name: incident-agent
+          webhook_configs:
+            - url: http://incident-agent.incident-agent.svc:8787/alertmanager
+              send_resolved: true
+              http_config:
+                authorization:
+                  type: Bearer
+                  credentials_file: /etc/alertmanager/incident-agent/token

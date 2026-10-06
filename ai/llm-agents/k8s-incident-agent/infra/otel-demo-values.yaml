@@ -1,0 +1,202 @@
+# Overrides for the open-telemetry/opentelemetry-demo chart (tested with 0.42.x).
+components:
+  # The demo's built-in AI agent and chatbot need an LLM API key. Without one they keep
+  # throwing errors that would pollute the signal for our agent, so we disable them.
+  agent:
+    enabled: false
+  chatbot:
+    enabled: false
+  # These services run at 91-96% of their memory limit in the demo (Java/.NET hold on to memory),
+  # so MemoryNearLimit fires non-stop and blocks the evaluation (dirty_env).
+  kafka:
+    resources:
+      limits:
+        memory: 1Gi       # default 700Mi with -Xmx400M
+  accounting:
+    resources:
+      limits:
+        memory: 300Mi     # default 160Mi
+  flagd:
+    resources:
+      limits:
+        memory: 150Mi     # default 75Mi; an OOM in flagd would break every flag scenario
+  fraud-detection:
+    resources:
+      limits:
+        memory: 500Mi     # default 300Mi; after kafka-lag the JVM holds memory and MemoryNearLimit blocked the eval
+  # The readiness probe for cart is NOT here: the chart schema only allows httpGet, while cart speaks
+  # HTTP/2 only (gRPC), so httpGet would always fail. The gRPC probe is added by the patch
+  # infra/cart-readiness-probe.yaml (make probes, called from make demo / apply-values and chaos reset).
+
+# The kubeletstats receiver does not work on kind (kubelet certificate without an IP SAN)
+# and only produces errors. Container memory and CPU come from cAdvisor instead,
+# which Prometheus scrapes through the API server (job kubernetes-nodes-cadvisor).
+opentelemetry-collector:
+  presets:
+    kubeletMetrics:
+      enabled: false
+
+# Grafana runs at ~100% of its default 300Mi limit and gets OOMKilled when
+# a heavier dashboard loads (frontend-proxy then returns "upstream connect error").
+grafana:
+  resources:
+    limits:
+      memory: 600Mi
+
+prometheus:
+  # Alertmanager (step 3): disabled by default in the demo chart. Once enabled, Prometheus
+  # discovers it via kubernetes_sd (pod labels instance=<release>, name=alertmanager,
+  # port 9093), so nothing needs adding to prometheus.yml. Prometheus is restarted in
+  # `make apply-values` because configmap-reload is disabled.
+  alertmanager:
+    enabled: true
+    fullnameOverride: alertmanager     # svc/alertmanager i statefulset/alertmanager (Makefile)
+    persistence:
+      enabled: false                   # emptyDir: the lab does not need a PVC
+    configmapReload:
+      enabled: false                   # the restart in `make apply-values` is enough
+    resources:
+      limits:
+        memory: 64Mi
+    config:
+      route:
+        receiver: incident-agent
+        # One group = one service + one alert; deduplication and cross-service correlation
+        # are done by the agent (incidents.py), not by Alertmanager.
+        group_by: [alertname, service]
+        group_wait: 10s
+        group_interval: 1m
+        repeat_interval: 1h
+      receivers:
+        - name: incident-agent
+          webhook_configs:
+            # The agent runs on the host (make serve). From kind the host is reachable as
+            # host.docker.internal (Docker Desktop). With WEBHOOK_TOKEN add:
+            #   http_config: {authorization: {type: Bearer, credentials: <token>}}
+            - url: http://host.docker.internal:8787/alertmanager
+              send_resolved: true
+  # Alert rules based on spanmetrics (RED), k8s metrics from the collector, and cAdvisor.
+  # The agent reads alerts from the Alertmanager webhook (make serve) or the Prometheus API (/api/v1/alerts).
+  serverFiles:
+    alerting_rules.yml:
+      groups:
+        - name: incident-lab
+          rules:
+            # A 5m window instead of 2m, plus keep_firing_for: with low traffic (a few orders
+            # per minute) a short gap without requests gave 0/0 = no data and the alert
+            # flapped (firing -> resolved -> pending). keep_firing_for holds it for 5 min.
+            - alert: HighErrorRate
+              expr: |
+                label_replace(
+                  sum by (service_name) (rate(traces_span_metrics_calls_total{status_code="STATUS_CODE_ERROR", span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[5m]))
+                  /
+                  sum by (service_name) (rate(traces_span_metrics_calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[5m]))
+                  > 0.05,
+                "service", "$1", "service_name", "(.+)")
+              for: 2m
+              keep_firing_for: 5m
+              labels: {severity: critical}
+              annotations:
+                summary: "{{ $labels.service }} error ratio = {{ $value | humanizePercentage }}"
+
+            # A failing operation gets lost in the service-wide average: EmptyCart in cart, or GetProduct
+            # for a single product, is a few % of all calls to the service. Hence a second, per-operation
+            # alert (span_name), with a traffic floor so single errors in rare operations don't cause noise.
+            - alert: HighOperationErrorRate
+              expr: |
+                label_replace(
+                  (
+                    sum by (service_name, span_name) (rate(traces_span_metrics_calls_total{status_code="STATUS_CODE_ERROR", span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[5m]))
+                    /
+                    sum by (service_name, span_name) (rate(traces_span_metrics_calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[5m]))
+                    > 0.05
+                  )
+                  and on (service_name, span_name)
+                  sum by (service_name, span_name) (rate(traces_span_metrics_calls_total{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[5m])) > 0.02,
+                "service", "$1", "service_name", "(.+)")
+              for: 2m
+              keep_firing_for: 5m
+              labels: {severity: warning}
+              annotations:
+                summary: "{{ $labels.service }} operation {{ $labels.span_name }} error ratio = {{ $value | humanizePercentage }}"
+
+            # Demo services have no CPU limits, so usage is measured in cores (cAdvisor).
+            - alert: HighCpuUsage
+              expr: |
+                label_replace(
+                  sum by (pod) (rate(container_cpu_usage_seconds_total{namespace="otel-demo", container!="", container!="POD", pod!~"(grafana|prometheus|alertmanager|opensearch|jaeger|otel-collector|load-generator|opamp-server|telemetry-docs)-.*"}[5m])) > 0.5,
+                "service", "$1", "pod", "(.+)-[a-z0-9]+-[a-z0-9]+")
+              for: 3m
+              labels: {severity: warning}
+              annotations:
+                summary: "{{ $labels.pod }} uses {{ $value | humanize }} CPU cores"
+
+            # Kafka consumer-group lag as seen by the broker (the collector's kafkametrics receiver).
+            # Group name = service name. Two collector agents report the same series, hence max.
+            # At rest lag = 0-1; during kafka-lag it grows by hundreds of messages per minute.
+            - alert: KafkaConsumerLag
+              expr: |
+                label_replace(
+                  max by (group, topic) (kafka_consumer_group_lag_ratio) > 100,
+                "service", "$1", "group", "(.+)")
+              for: 2m
+              labels: {severity: warning}
+              annotations:
+                summary: "consumer group {{ $labels.group }} is {{ $value }} messages behind on topic {{ $labels.topic }}"
+
+            - alert: HighLatencyP95
+              expr: |
+                label_replace(
+                  histogram_quantile(0.95, sum by (service_name, le) (rate(traces_span_metrics_duration_milliseconds_bucket{span_kind=~"SPAN_KIND_SERVER|SPAN_KIND_CONSUMER"}[5m])))
+                  > 2000,
+                "service", "$1", "service_name", "(.+)")
+              for: 3m
+              labels: {severity: warning}
+              annotations:
+                summary: "{{ $labels.service }} p95 latency = {{ $value | humanize }} ms"
+
+            - alert: PodRestarting
+              expr: |
+                label_replace(
+                  increase(k8s_container_restarts{k8s_namespace_name="otel-demo"}[10m]) > 1,
+                "service", "$1", "k8s_pod_name", "(.+)-[a-z0-9]+-[a-z0-9]+")
+              labels: {severity: critical}
+              annotations:
+                summary: "Container in {{ $labels.k8s_pod_name }} is restarting"
+
+            - alert: ContainerNotReady
+              expr: |
+                label_replace(
+                  k8s_container_ready{k8s_namespace_name="otel-demo"} == 0,
+                "service", "$1", "k8s_pod_name", "(.+)-[a-z0-9]+-[a-z0-9]+")
+              for: 2m
+              labels: {severity: warning}
+              annotations:
+                summary: "{{ $labels.k8s_pod_name }} is not Ready"
+
+            # Memory alerts for application services only. The observability stack
+            # (Grafana, Prometheus, OpenSearch...) and load-generator run close to
+            # their limits in the demo and would produce constant noise.
+            # Heuristic: steady container memory growth (>100 KB/s over 10 min).
+            - alert: MemoryGrowth
+              expr: |
+                label_replace(
+                  deriv(container_memory_working_set_bytes{namespace="otel-demo", container!="", container!="POD", pod!~"(grafana|prometheus|alertmanager|opensearch|jaeger|otel-collector|load-generator|opamp-server|telemetry-docs)-.*"}[10m]) > 100000,
+                "service", "$1", "pod", "(.+)-[a-z0-9]+-[a-z0-9]+")
+              for: 5m
+              labels: {severity: warning}
+              annotations:
+                summary: "{{ $labels.pod }} memory keeps growing"
+
+            - alert: MemoryNearLimit
+              expr: |
+                label_replace(
+                  sum by (pod, container) (container_memory_working_set_bytes{namespace="otel-demo", container!="", container!="POD", pod!~"(grafana|prometheus|alertmanager|opensearch|jaeger|otel-collector|load-generator|opamp-server|telemetry-docs)-.*"})
+                  /
+                  sum by (pod, container) (container_spec_memory_limit_bytes{namespace="otel-demo", container!="", container!="POD"} > 0)
+                  > 0.9,
+                "service", "$1", "pod", "(.+)-[a-z0-9]+-[a-z0-9]+")
+              for: 2m
+              labels: {severity: warning}
+              annotations:
+                summary: "{{ $labels.pod }} uses {{ $value | humanizePercentage }} of its memory limit"

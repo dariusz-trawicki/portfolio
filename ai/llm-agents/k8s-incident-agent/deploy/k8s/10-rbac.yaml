@@ -1,0 +1,87 @@
+# What the agent may do in the cluster — the least it needs, checked by
+# `kubectl -n incident-agent exec deploy/incident-agent -- incident-agent doctor`.
+#
+#   read      pods, events, deployments, replicasets             (diagnosis; logs come from OpenSearch)
+#   patch     ONLY the application deployments listed below      (`kubectl rollout undo`, after human approval)
+#   never     secrets, pods/exec, delete, create, anything outside otel-demo
+#
+# Feature flags are switched through the flagd-ui HTTP API, not the Kubernetes API, so they need no RBAC.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: incident-agent
+  namespace: incident-agent
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: incident-agent-read
+  namespace: otel-demo
+rules:
+  - apiGroups: [""]
+    resources: [pods, events]
+    verbs: [get, list, watch]
+  - apiGroups: [apps]
+    resources: [deployments, replicasets]
+    verbs: [get, list, watch]
+---
+# The only write permission. `resourceNames` = the services from the dependency map
+# (remediation.application_services(); tests/test_deploy.py keeps the two lists equal),
+# so even a buggy executor could not patch Prometheus, Grafana or flagd.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: incident-agent-rollback
+  namespace: otel-demo
+rules:
+  - apiGroups: [apps]
+    resources: [deployments]
+    verbs: [patch]
+    resourceNames:
+      - accounting
+      - ad
+      - astronomy-db
+      - cart
+      - checkout
+      - currency
+      - email
+      - flagd-ui
+      - fraud-detection
+      - frontend
+      - frontend-proxy
+      - image-provider
+      - kafka
+      - payment
+      - product-catalog
+      - quote
+      - recommendation
+      - shipping
+      - valkey-cart
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: incident-agent-read
+  namespace: otel-demo
+subjects:
+  - kind: ServiceAccount
+    name: incident-agent
+    namespace: incident-agent
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: incident-agent-read
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: incident-agent-rollback
+  namespace: otel-demo
+subjects:
+  - kind: ServiceAccount
+    name: incident-agent
+    namespace: incident-agent
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: incident-agent-rollback

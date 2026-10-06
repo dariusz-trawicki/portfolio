@@ -1,0 +1,14 @@
+# ArgoCD "core" has no API server, and the server is what normally creates the `default` project at startup.
+# Without it every Application fails with: InvalidSpecError "referencing project default which does not exist".
+# Same permissive spec ArgoCD itself creates; fine for a single-user lab, tighten it for anything shared.
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: default
+  namespace: argocd
+spec:
+  sourceRepos: ["*"]
+  destinations:
+    - {namespace: "*", server: "*"}
+  clusterResourceWhitelist:
+    - {group: "*", kind: "*"}

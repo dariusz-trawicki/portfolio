@@ -1,0 +1,96 @@
+{
+  "_comment": "Recording of the payment-unreachable-deploy scenario: someone deployed checkout with a bad PAYMENT_ADDR. Same symptom as the paymentUnreachable flag, but flags are clean — the cause is in the deployment revision.",
+  "alert": {
+    "name": "HighErrorRate",
+    "service": "checkout",
+    "severity": "critical",
+    "summary": "checkout error ratio = 41.2%",
+    "labels": {"alertname": "HighErrorRate", "service": "checkout", "service_name": "checkout"},
+    "started_at": "2026-09-28T15:42:10Z"
+  },
+  "firing_alerts": [
+    {"name": "HighErrorRate", "service": "checkout", "severity": "critical", "summary": "checkout error ratio = 41.2%",
+     "labels": {"alertname": "HighErrorRate", "service": "checkout"}, "started_at": "2026-09-28T15:42:10Z", "state": "firing"}
+  ],
+  "service_overview": {
+    "checkout": {
+      "service": "checkout",
+      "now_5m": {"requests_per_s": 0.85, "error_ratio": 0.412, "p95_ms": 212.4},
+      "1h_ago_5m": {"requests_per_s": 0.83, "error_ratio": 0.0, "p95_ms": 188.1},
+      "memory_working_set_mb": 14.2, "memory_growth_kb_per_s_10m": 0.3, "cpu_cores": 0.012
+    },
+    "payment": {
+      "service": "payment",
+      "now_5m": {"requests_per_s": 0.0, "error_ratio": null, "p95_ms": null},
+      "1h_ago_5m": {"requests_per_s": 0.34, "error_ratio": 0.0, "p95_ms": 21.7},
+      "memory_working_set_mb": 61.0, "memory_growth_kb_per_s_10m": 0.0, "cpu_cores": 0.004
+    }
+  },
+  "error_breakdown": {
+    "checkout": [
+      {"span": "oteldemo.CheckoutService/PlaceOrder", "kind": "SPAN_KIND_SERVER", "errors_per_s": 0.35},
+      {"span": "oteldemo.PaymentService/Charge", "kind": "SPAN_KIND_CLIENT", "errors_per_s": 0.35}
+    ]
+  },
+  "pods": {
+    "checkout": [
+      {"pod": "checkout-7d9f8c6b54-x2kqp", "phase": "Running", "age": "11m", "revision_hash": "7d9f8c6b54",
+       "containers": [{"name": "checkout", "ready": true, "restarts": 0, "image": "ghcr.io/open-telemetry/demo:3.1.0-checkout",
+                       "waiting_reason": null, "waiting_message": null, "last_termination": null}]}
+    ],
+    "payment": [
+      {"pod": "payment-5c6d7f9b8-mm4tz", "phase": "Running", "age": "3h", "revision_hash": "5c6d7f9b8",
+       "containers": [{"name": "payment", "ready": true, "restarts": 0, "image": "ghcr.io/open-telemetry/demo:3.1.0-payment",
+                       "waiting_reason": null, "waiting_message": null, "last_termination": null}]}
+    ]
+  },
+  "events": {
+    "checkout": [
+      {"ago": "11m", "type": "Normal", "reason": "ScalingReplicaSet", "object": "Deployment/checkout", "count": 1,
+       "message": "Scaled up replica set checkout-7d9f8c6b54 from 0 to 1"},
+      {"ago": "10m", "type": "Normal", "reason": "ScalingReplicaSet", "object": "Deployment/checkout", "count": 1,
+       "message": "Scaled down replica set checkout-6b8d4f7c9 from 1 to 0"}
+    ],
+    "payment": []
+  },
+  "rollout_history": {
+    "checkout": [
+      {"revision": "1", "created": "2026-09-28T12:30:02Z", "age": "3h", "replicas_desired": 0, "replicas_ready": 0,
+       "images": {"checkout": "ghcr.io/open-telemetry/demo:3.1.0-checkout"}, "changes_vs_previous": ["(oldest retained revision)"]},
+      {"revision": "2", "created": "2026-09-28T15:38:44Z", "age": "11m", "replicas_desired": 1, "replicas_ready": 1,
+       "images": {"checkout": "ghcr.io/open-telemetry/demo:3.1.0-checkout"},
+       "changes_vs_previous": ["checkout: env PAYMENT_ADDR 'payment:8080' -> 'payment-v2:8080'"]}
+    ],
+    "payment": [
+      {"revision": "1", "created": "2026-09-28T12:30:02Z", "age": "3h", "replicas_desired": 1, "replicas_ready": 1,
+       "images": {"payment": "ghcr.io/open-telemetry/demo:3.1.0-payment"}, "changes_vs_previous": ["(oldest retained revision)"]}
+    ]
+  },
+  "deployment_spec": {
+    "checkout": {
+      "deployment": "checkout", "replicas": 1, "ready": 1, "updated": 1, "revision": "2",
+      "conditions": [{"type": "Available", "status": "True", "reason": "MinimumReplicasAvailable", "message": "Deployment has minimum availability."}],
+      "containers": {"checkout": {"image": "ghcr.io/open-telemetry/demo:3.1.0-checkout",
+        "env": {"CART_ADDR": "cart:8080", "PAYMENT_ADDR": "payment-v2:8080", "EMAIL_ADDR": "http://email:8080", "KAFKA_ADDR": "kafka:9092"},
+        "limits": {"memory": "20Mi"}, "requests": {}}}
+    },
+    "payment": {
+      "deployment": "payment", "replicas": 1, "ready": 1, "updated": 1, "revision": "1", "conditions": [],
+      "containers": {"payment": {"image": "ghcr.io/open-telemetry/demo:3.1.0-payment", "env": {"PAYMENT_PORT": "8080"}, "limits": {"memory": "120Mi"}, "requests": {}}}
+    }
+  },
+  "feature_flags": {"total_flags": 20, "non_default_flags": []},
+  "search_logs": {
+    "checkout": [
+      {"@timestamp": "2026-09-28T15:49:51.118Z", "severity.text": "ERROR", "resource.service.name": "checkout",
+       "body": "failed to charge card: could not charge the card: rpc error: code = Unavailable desc = name resolver error: produced zero addresses"},
+      {"@timestamp": "2026-09-28T15:49:37.402Z", "severity.text": "ERROR", "resource.service.name": "checkout",
+       "body": "failed to charge card: could not charge the card: rpc error: code = Unavailable desc = dns: A record lookup error: lookup payment-v2 on 10.96.0.10:53: no such host"}
+    ],
+    "payment": []
+  },
+  "list_metrics": [
+    "traces_span_metrics_calls_total", "traces_span_metrics_duration_milliseconds_bucket",
+    "k8s_container_restarts", "k8s_container_ready", "container_memory_working_set_bytes", "container_spec_memory_limit_bytes", "container_cpu_usage_seconds_total"
+  ]
+}

@@ -1,0 +1,19 @@
+# Strategic merge patch for deployment/cart: readiness probe via the gRPC health check.
+#
+# Why: the failedReadinessProbe flag switches cart's gRPC health check to NOT_SERVING, but the
+# OTel Demo chart defines no probe for cart, so Kubernetes never noticed and the cart-not-ready
+# scenario produced no alert. The chart schema only allows httpGet, and Kestrel in cart speaks
+# HTTP/2 only (appsettings.json: Protocols=Http2), so httpGet is not an option.
+#
+# The patch survives `helm upgrade` and `kubectl apply` of the helm manifest (a field outside the
+# manifest is not removed), but we still re-apply it in make apply-values and chaos reset (idempotent).
+spec:
+  template:
+    spec:
+      containers:
+        - name: cart
+          readinessProbe:
+            grpc:
+              port: 8080
+            periodSeconds: 10
+            failureThreshold: 3

@@ -1,0 +1,13 @@
+# The agent lives in its own namespace, outside the application it diagnoses:
+# `chaos reset` (kubectl apply of the helm manifest) never touches it, and a broken
+# otel-demo cannot take the agent's database down with it.
+#
+# Pod Security "restricted": the API server rejects any pod here that runs as root,
+# keeps Linux capabilities or allows privilege escalation.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: incident-agent
+  labels:
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/warn: restricted

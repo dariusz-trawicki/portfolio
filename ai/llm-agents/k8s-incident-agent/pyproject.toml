@@ -1,0 +1,41 @@
+[project]
+name = "k8s-incident-agent"
+version = "0.3.0"
+description = "LangGraph agent that diagnoses Kubernetes incidents, benchmarked against injected faults"
+requires-python = ">=3.11"
+dependencies = [
+  "langgraph>=1.2",
+  "langgraph-checkpoint-sqlite>=3.0",
+  "langchain>=1.4",
+  "langchain-anthropic>=1.0",
+  "langchain-openai>=1.0",
+  "kubernetes>=31",
+  "httpx>=0.27",
+  "pydantic>=2.8",
+  "pyyaml>=6",
+  "typer>=0.12",
+  "rich>=13",
+  "fastapi>=0.115",
+  "uvicorn>=0.30",
+  "prometheus-client>=0.20",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8"]
+tracing = ["langfuse>=3"]
+# step 5c: PostgresSaver + the incidents table (the agent running in the cluster)
+postgres = ["langgraph-checkpoint-postgres>=3.0", "psycopg[binary,pool]>=3.2"]
+
+[project.scripts]
+incident-agent = "incident_agent.cli:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/incident_agent"]
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
