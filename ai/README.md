@@ -13,6 +13,7 @@ from experiments to models running in the cloud.
 | [fine-tuning](fine-tuning/) | Adapting open models to domain-specific tasks |
 | [llm-tooling](llm-tooling/) | Applied LLM utilities and Claude Code skill-chain workflows |
 | [computer-vision](computer-vision/) | Classification, detection, tracking, pose estimation, OCR |
+| [deep-learning](deep-learning/) | Deep learning |
 | [gen-ai](gen-ai/) | Generative image models |
 | [predictive-modeling-optimization](predictive-modeling-optimization/) | Classical ML pipelines and mathematical optimization |
 
@@ -29,6 +30,7 @@ from experiments to models running in the cloud.
 | [llm-rag/local-langchain-huggingface](llm-rag/local-langchain-huggingface/) | Fully local RAG, no external API calls | LangChain, HuggingFace, FAISS |
 | [llm-rag/graphrag-neo4j](llm-rag/graphrag-neo4j/) | GraphRAG — LLM-driven knowledge graph extraction with vector retrieval over the graph | Neo4j, neo4j-graphrag, Anthropic API |
 | [llm-rag/multimodal-jina-v4-qdrant](llm-rag/multimodal-jina-v4-qdrant/) | Cross-modal retrieval: text and images in one embedding space and one collection, searched in all directions (text↔image) | jina-embeddings-v4, Qdrant, Python |
+| [llm-agents/livekit-rag-voice-agent](llm-agents/livekit-rag-voice-agent/) | Real-time voice customer-support agent for a fictional energy supplier: 7 tools (account lookup, validated meter readings, power cuts, tariff cost comparison, tickets), RAG over PDF docs, tool output kept out of TTS, 34 offline unit tests | LiveKit Agents, Deepgram, Inworld TTS, LangChain, Groq, Docling, Qdrant |
 
 ### Agents
 
@@ -41,6 +43,7 @@ from experiments to models running in the cloud.
 | [llm-agents/haystack-movie-recommender](llm-agents/haystack-movie-recommender/) | LLM agent decomposing natural-language queries into sparse search + metadata filters | Haystack, Qdrant, FastEmbed (SPLADE), Claude |
 | [llm-agents/local-english-teacher](llm-agents/local-english-teacher/) | Fully local voice English tutor: speech in, spoken answer and grammar correction out, with persistent mistake memory and Prometheus/Grafana latency monitoring | FastRTC (WebRTC), faster-Whisper, Ollama, Piper / macOS `say`, Prometheus, Grafana, Docker |
 | [llm-agents/k8s-incident-agent](llm-agents/k8s-incident-agent/) | SRE agent that diagnoses Kubernetes incidents from Prometheus alerts and fixes them only after a human approves: 12/12 on an evaluation set with ground truth, state in Postgres, least-privilege RBAC, GitOps rollbacks as pull requests applied by ArgoCD | LangGraph, Claude, FastAPI, Kubernetes (kind), Prometheus, Alertmanager, Grafana, Postgres, ArgoCD |
+| [llm-agents/livekit-rag-voice-agent](llm-agents/livekit-rag-voice-agent/) | Real-time voice customer-support agent for a fictional energy supplier: 7 tools (account lookup, validated meter readings, power cuts, tariff cost comparison, tickets), RAG over PDF docs, tool output kept out of TTS, 34 offline unit tests | LiveKit Agents, Deepgram, Inworld TTS, LangChain, Groq, Docling, Qdrant |
 
 ### Deployment & fine-tuning
 
