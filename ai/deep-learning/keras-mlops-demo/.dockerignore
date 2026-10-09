@@ -1,0 +1,12 @@
+.venv/
+mlruns/
+mlflow.db
+exp/
+tests/
+scripts/
+docs/
+.git/
+.github/
+__pycache__/
+.pytest_cache/
+artifacts/prediction_log.jsonl
