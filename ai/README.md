@@ -36,6 +36,7 @@ from experiments to models running in the cloud.
 
 | Project | Description | Stack |
 |---|---|---|
+| [llm-agents/livekit-rag-voice-agent](llm-agents/livekit-rag-voice-agent/) | Real-time voice customer-support agent for a fictional energy supplier: 7 tools (account lookup, validated meter readings, power cuts, tariff cost comparison, tickets), RAG over PDF docs, tool output kept out of TTS, 34 offline unit tests | LiveKit Agents, Deepgram, Inworld TTS, LangChain, Groq, Docling, Qdrant |
 | [llm-agents/agent-pydanticai-function-calling](llm-agents/agent-pydanticai-function-calling/) | Type-safe function calling with structured outputs | PydanticAI, Python |
 | [llm-agents/langgraph-openai-tavily](llm-agents/langgraph-openai-tavily/) | Graph-based agent with web search as a tool | LangGraph, OpenAI, Tavily |
 | [llm-agents/realtime-groq-gpt-voice-chat](llm-agents/realtime-groq-gpt-voice-chat/) | Low-latency voice conversation | Groq, OpenAI, streaming audio |
@@ -43,7 +44,7 @@ from experiments to models running in the cloud.
 | [llm-agents/haystack-movie-recommender](llm-agents/haystack-movie-recommender/) | LLM agent decomposing natural-language queries into sparse search + metadata filters | Haystack, Qdrant, FastEmbed (SPLADE), Claude |
 | [llm-agents/local-english-teacher](llm-agents/local-english-teacher/) | Fully local voice English tutor: speech in, spoken answer and grammar correction out, with persistent mistake memory and Prometheus/Grafana latency monitoring | FastRTC (WebRTC), faster-Whisper, Ollama, Piper / macOS `say`, Prometheus, Grafana, Docker |
 | [llm-agents/k8s-incident-agent](llm-agents/k8s-incident-agent/) | SRE agent that diagnoses Kubernetes incidents from Prometheus alerts and fixes them only after a human approves: 12/12 on an evaluation set with ground truth, state in Postgres, least-privilege RBAC, GitOps rollbacks as pull requests applied by ArgoCD | LangGraph, Claude, FastAPI, Kubernetes (kind), Prometheus, Alertmanager, Grafana, Postgres, ArgoCD |
-| [llm-agents/livekit-rag-voice-agent](llm-agents/livekit-rag-voice-agent/) | Real-time voice customer-support agent for a fictional energy supplier: 7 tools (account lookup, validated meter readings, power cuts, tariff cost comparison, tickets), RAG over PDF docs, tool output kept out of TTS, 34 offline unit tests | LiveKit Agents, Deepgram, Inworld TTS, LangChain, Groq, Docling, Qdrant |
+
 
 ### Deployment & fine-tuning
 

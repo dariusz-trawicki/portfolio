@@ -24,6 +24,7 @@
 
 | Project | What it does | Stack |
 |---|---|---|
+| [ai/llm-agents/livekit-rag-voice-agent](ai/llm-agents/livekit-rag-voice-agent/) | Real-time voice customer-support agent, RAG over PDF docs, tool output kept out of TTS| LiveKit Agents, Deepgram, Inworld TTS, LangChain, Groq, Docling, Qdrant |
 | [gitops-gke-machines-efficiency](mlops/gitops-gke-machines-efficiency/) | ML model delivered to GKE declaratively — code, manifests and infrastructure in separate repos, synced by ArgoCD | GKE, Terraform, ArgoCD, GitHub Actions, Prometheus, Grafana |
 | [with-llm-bielik-on-ec2](ai/llm-rag/with-llm-bielik-on-ec2/) | RAG over a self-hosted Polish LLM, with its own embedding service and vector store | Bielik, EC2, Docker, Terraform |
 | [k8s-mlflow-data-drift-grafana](mlops/k8s-mlflow-data-drift-grafana/) | Model serving on Kubernetes with data drift detection and dashboards | Kubernetes, MLflow, Prometheus, Grafana |
