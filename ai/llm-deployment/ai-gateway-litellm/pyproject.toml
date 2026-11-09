@@ -1,0 +1,24 @@
+[project]
+name = "ai-gateway-demo"
+version = "1.0.0"
+description = "AI gateway patterns with LiteLLM on Anthropic + Groq: unified API, fallback, caching, cost tracking, routing, load balancing, guardrails, LangChain."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    # Pinned: litellm 1.108.x fails on cache hits without `fastapi` installed
+    # (the SDK cache path imports proxy-only modules). 1.93 is verified.
+    "litellm>=1.93.0,<1.94",
+    "langchain-litellm>=0.7.0,<0.8",
+    "langchain-core>=1.0.0",
+    "python-dotenv>=1.0.0",
+]
+
+[dependency-groups]
+dev = ["pytest>=8.0"]
+
+[tool.uv]
+package = false  # a collection of runnable scripts, not an installable library
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]

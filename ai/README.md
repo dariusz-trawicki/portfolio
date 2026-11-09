@@ -9,7 +9,7 @@ from experiments to models running in the cloud.
 |---|---|
 | [llm-rag](llm-rag/) | Retrieval-augmented generation: semantic search, vector stores, agentic retrieval |
 | [llm-agents](llm-agents/) | Function calling, tool use, voice and multi-step agent workflows |
-| [llm-deployment](llm-deployment/) | Serving LLMs — managed APIs, serverless, self-hosted GPU instances |
+| [llm-deployment](llm-deployment/) | Serving and operating LLMs — managed APIs, serverless, self-hosted GPU instances, AI gateways |
 | [fine-tuning](fine-tuning/) | Adapting open models to domain-specific tasks |
 | [llm-tooling](llm-tooling/) | Applied LLM utilities and Claude Code skill-chain workflows |
 | [computer-vision](computer-vision/) | Classification, detection, tracking, pose estimation, OCR |
@@ -56,6 +56,7 @@ from experiments to models running in the cloud.
 | [fine-tuning/news-class](fine-tuning/news-class/) | Fine-tuned classifier for news categorization | Transformers, PyTorch |
 | [llm-deployment/idps-aws-bedrock](llm-deployment/idps-aws-bedrock/) | Intelligent document processing — invoices in JPG, PDF and PNG parsed by a multimodal model | AWS Bedrock, Python |
 | [llm-deployment/vllm-serving-colab-t4](llm-deployment/vllm-serving-colab-t4/) | Self-hosted LLM served via vLLM's OpenAI-compatible API | vLLM, PyTorch, OpenAI SDK |
+| [llm-deployment/ai-gateway-litellm](llm-deployment/ai-gateway-litellm/) | AI gateway layer between applications and LLM providers: unified API, automatic fallback, response caching, per-call cost tracking, task-based routing and load balancing, PII redaction and prompt-injection blocking, 19 offline unit tests | LiteLLM, LangChain, Claude, Groq, pytest |
 
 ### Computer vision
 
